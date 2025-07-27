@@ -1,7 +1,10 @@
 #ifndef KN_CORE_HPP
 #define KN_CORE_HPP
 
-#define SC_VERSION "1.0.0"
+#define KN_VERSION "1.0.0"
+
+#define KN_MEM_POINTER(var) reinterpret_cast<char*>(var)
+
 
 namespace kon {
 
