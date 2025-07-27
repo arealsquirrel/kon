@@ -14,6 +14,7 @@ file(
 include(${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake)
 
 CPMAddPackage("gh:nlohmann/json@3.12.0")
+CPMAddPackage("gh:gabime/spdlog@1.15.3")
 CPMAddPackage("gh:google/googletest@1.17.0")
 CPMAddPackage("gh:google/benchmark@1.5.2")
 
@@ -24,7 +25,7 @@ find_package(glfw3 REQUIRED)
 #find_package(Vulkan REQUIRED)
 
 add_subdirectory(core)
-#add_subdirectory(editor)
+add_subdirectory(editor)
 add_subdirectory(testing)
 
 enable_testing()
