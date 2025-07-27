@@ -1,0 +1,36 @@
+#ifndef KN_UTIL_HPP
+#define KN_UTIL_HPP
+
+#include <kon/core/core.hpp>
+
+namespace kon {
+
+struct Point {
+	int x;
+	int y;
+};
+
+struct Rect {
+	unsigned int width;
+	unsigned int height;
+	int x;
+	int y;
+};
+
+template<typename First, typename Second>
+struct Pair {
+public:
+	Pair(First _f, Second _s)
+		: first(_f), second(_s) {}
+	~Pair() = default;
+	Pair(const Pair &pair)
+		: first(pair.first), second(pair.second) {}
+
+public:
+	First first;
+	Second second;
+};
+
+}
+
+#endif
