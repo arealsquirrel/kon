@@ -5,6 +5,7 @@
 #include <fstream>
 #include <kon/core/core.hpp>
 #include <chrono>
+#include <kon/debug/timer.hpp>
 
 
 /*
@@ -14,13 +15,11 @@
  */
 namespace kon {
 
-using timePoint = std::chrono::time_point<std::chrono::system_clock>;
-
 struct DebugFrame
 {
-	u32 duration; // duration in microseconds
-	size_t threadID;
-	timePoint startTime;
+	i64 duration; // duration in microseconds
+	u32 threadID;
+	TimePoint startTime;
 	ShortString name;
 };
 
@@ -46,34 +45,28 @@ private:
 	void write_footer();
 
 private:
-	std::ofstream file;
-	std::mutex mutex;
-	int profileCount {0};
-	timePoint fileStartTime;
+	std::ofstream m_file;
+	int m_profileCount {0};
+	TimePoint m_fileStartTime;
 };
 
 struct InstrumentorMeasure {
 public:
-	InstrumentorMeasure(ShortString name, size_t threadID=0);
+	InstrumentorMeasure(ShortString name, u32 threadID=0);
 	~InstrumentorMeasure();
 
-	void end_timer();
-
 private:
-	ShortString programName { "_null" };
-	timePoint start;
-	timePoint end;
-	bool running {true};
+	ShortString m_name { "_null" };
+	Timer m_timer;
 	u32 m_threadID;
 };
 
-#define SC_INSTRUMENT_TIMER(...) ::snowcrash::Timer sc_timer(__VA_ARGS__);
-#define SC_INSTRUMENT_NEW_FILE(name) ::snowcrash::Instrumentor::Get().OpenFile(name);
-#define SC_INSTRUMENT_CLOSE_FILE() ::snowcrash::Instrumentor::Get().CloseFile();
+#define KN_INSTRUMENT_TIMER(tname, ...) ::kon::InstrumentorMeasure tname(__VA_ARGS__);
+#define KN_INSTRUMENT_NEW_FILE(name) ::kon::Instrumentor::Get().open_file(name);
+#define KN_INSTRUMENT_CLOSE_FILE() ::kon::Instrumentor::Get().close_file();
 
-// #define SC_INSTRUMENT_FUNCTION(func, threadID) SC_INSTRUMENT_TIMER(__func__, threadID)
-#define SC_INSTRUMENT_SCOPE(...) SC_INSTRUMENT_TIMER(__VA_ARGS__)
-#define SC_INSTRUMENT_FUNCTION() SC_INSTRUMENT_TIMER(__func__, 0)
+#define KN_INSTRUMENT_SCOPE(...) KN_INSTRUMENT_TIMER(kn_timer, __VA_ARGS__)
+#define KN_INSTRUMENT_FUNCTION() KN_INSTRUMENT_TIMER(kn_function, __func__, 0)
 
 }
 

@@ -3,7 +3,6 @@
 
 #include "kon/core/allocator.hpp"
 #include "kon/core/assert.hpp"
-#include "gtest/gtest.h"
 #include <cstring>
 #include <kon/core/core.hpp>
 
