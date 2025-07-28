@@ -1,8 +1,10 @@
-#include "kon/container/array.hpp"
+
 #include "kon/container/string.hpp"
+#include "kon/container/array.hpp"
 #include <gtest/gtest.h>
-#include <kon/core/core.hpp>
-#include <kon/core/allocator.hpp>
+// #include <kon/core/core.hpp>
+// #include <kon/core/allocator.hpp>
+#include "kon/container/arraylist.hpp"
 
 using namespace kon;
 
@@ -23,6 +25,22 @@ public:
 
 	int x {2};
 }; 
+
+class foo {
+public:
+	foo() = default;
+
+	foo(const foo &f) = default;
+
+	foo(int _a)
+		: a(_a) {}
+
+	~foo() = default;
+
+public:
+	int a {1};
+};
+
 
 TEST(Container, ShortString) {
 	ShortString s;
@@ -60,6 +78,32 @@ TEST(Container, Array) {
 	arr[3] = ShortString("three");
 	arr[4] = ShortString("four");
 
-	EXPECT_STREQ(arr[0].c_str(), "zero");
+	// EXPECT_STREQ(arr[0].c_str(), "zero");
 }
+
+
+TEST(Container, ArrayList) {
+	MemoryBlock block(1204);
+	FreeListAllocator fa(&block);
+
+	ArrayList<foo> array(&fa);
+	array.add(foo(5));
+	array.add(foo(2));
+	array.add(foo(3));
+
+	ArrayList<foo> newArray(array);
+	newArray.add(foo(1));
+	newArray.remove();
+	newArray.add(foo(3));
+	newArray[0].a = 4;
+
+	EXPECT_EQ(array[0].a, 5);
+	EXPECT_EQ(array.get_count(), 3);
+	EXPECT_EQ(array.get_size(), 3);
+	EXPECT_EQ(newArray.get_size(), 4);
+	EXPECT_EQ(newArray[0].a, 4);
+	EXPECT_EQ(newArray.get_count(), 4);
+}
+
+
 

@@ -31,4 +31,3 @@ target_link_libraries(
 	kon-core
 	benchmark::benchmark_main
 )
-
