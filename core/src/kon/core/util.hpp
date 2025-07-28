@@ -2,8 +2,12 @@
 #define KN_UTIL_HPP
 
 #include <kon/core/core.hpp>
+#include <functional>
 
 namespace kon {
+
+template<typename T>
+using ForEachFunction = std::function<void(T &element, u32 index)>;
 
 struct Point {
 	int x;
