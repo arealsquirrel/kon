@@ -35,6 +35,12 @@ public:
 	Second second;
 };
 
+template<class First, class Second>
+void swap_pair(Pair<First, Second> &a, Pair<First, Second> &b) {
+	std::swap(a.first, b.first);
+	// std::swap(a.second, b.second);
+}
+
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef SC_INSTRUMENTATION_HPP
-#define SC_INSTRUMENTATION_HPP
+#ifndef KN_INSTRUMENTATION_HPP
+#define KN_INSTRUMENTATION_HPP
 
 #include "kon/container/string.hpp"
 #include <fstream>

@@ -5,6 +5,7 @@
 #include "kon/core/assert.hpp"
 #include <cstring>
 #include <kon/core/core.hpp>
+#include <utility>
 
 namespace kon {
 

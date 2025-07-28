@@ -1,4 +1,5 @@
 
+#include "kon/container/hashmap.hpp"
 #include "kon/container/string.hpp"
 #include "kon/container/array.hpp"
 #include <gtest/gtest.h>
@@ -77,8 +78,6 @@ TEST(Container, Array) {
 	arr[2] = ShortString("two");
 	arr[3] = ShortString("three");
 	arr[4] = ShortString("four");
-
-	// EXPECT_STREQ(arr[0].c_str(), "zero");
 }
 
 
@@ -105,5 +104,22 @@ TEST(Container, ArrayList) {
 	EXPECT_EQ(newArray.get_count(), 4);
 }
 
+TEST(Container, Hashmap) {
+	MemoryBlock block(1204);
+	Allocator fa(&block);
 
+	HashMap<u32, String> map(&fa, 2);
+
+	map.add({1, String("one", &fa)});
+	map.add({2, String("two", &fa)});
+	map.add({3, String("three", &fa)});
+	map.add({4, String("four", &fa)});
+	map.remove(3);
+	map.add({5, String("five", &fa)});
+
+	EXPECT_EQ(map.has_key(3), false);
+	EXPECT_EQ(map.has_key(2), true);
+	EXPECT_STREQ("one", map[1].second.c_str());
+	EXPECT_STREQ("five", map[5].second.c_str());
+}
 
