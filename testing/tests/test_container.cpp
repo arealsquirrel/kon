@@ -1,5 +1,6 @@
 
 #include "kon/container/hashmap.hpp"
+#include "kon/container/set.hpp"
 #include "kon/container/string.hpp"
 #include "kon/container/array.hpp"
 #include <gtest/gtest.h>

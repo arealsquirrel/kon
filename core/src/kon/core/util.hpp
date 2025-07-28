@@ -24,6 +24,7 @@ struct Rect {
 template<typename First, typename Second>
 struct Pair {
 public:
+	Pair() = default;
 	Pair(First _f, Second _s)
 		: first(_f), second(_s) {}
 	~Pair() = default;

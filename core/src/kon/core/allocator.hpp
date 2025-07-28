@@ -66,7 +66,7 @@ public:
 	 */
 	template<class T, typename ...Args>
 	[[nodiscard]]
-	T *allocate(u32 size=1, Args &&...args) {
+	inline T *allocate(u32 size=1, Args &&...args) {
 		T *mem = reinterpret_cast<T*>(allocate_mem(sizeof(T) * size));
 		for(u32 i = 0; i < size; i++)
 			new (mem+i) T(std::forward<Args>(args)...);
@@ -77,7 +77,7 @@ public:
 	 * calls the destructor
 	 */
 	template<class T>
-	void free(T *mem, u32 size=1) {
+	inline void free(T *mem, u32 size=1) {
 		for(u32 i = 0; i < size; i++)
 		 	(mem+i)->~T();
 
