@@ -50,6 +50,8 @@ public:
 
     ~Set() {
         clear(m_rootNode);
+
+		m_allocator->free_mem(KN_MEM_POINTER(m_nil), sizeof(TreeNode));
     }
 
 public:
