@@ -10,7 +10,7 @@ namespace kon {
 class Engine;
 
 struct TypeInfo {
-	TypeInfo *parent;
+	const TypeInfo *parent;
 	ShortString name;
 	UUID typeID;
 };
@@ -48,13 +48,13 @@ public:
 
 	template<typename T>
 	inline T *cast() {
-		SC_ASSERT(instance_of<T>(), "this object {} is not an instance of T", *this);
+		KN_ASSERT(instance_of<T>(), "this object {} is not an instance of T", *this);
 		return dynamic_cast<T*>(this);
 	}
 
 	template<typename T>
 	inline const T *cast() const {
-		SC_ASSERT(instance_of<T>(), "this object {} is not an instance of T", *this);
+		KN_ASSERT(instance_of<T>(), "this object {} is not an instance of T", *this);
 		return dynamic_cast<T*>(this);
 	}
 
@@ -64,7 +64,7 @@ protected:
 	Allocator *m_allocator;
 };
 
-#define SC_OBJECT(className, parent) public: \
+#define KN_OBJECT(className, parent) public: \
 	virtual const TypeInfo *get_typeinfo() const override { return get_static_typeinfo(); } \
 	virtual UUID get_type_UUID() const override { return get_static_typeinfo()->typeID; } \
 	static const TypeInfo *get_static_typeinfo() { static TypeInfo info {parent::get_static_typeinfo(), #className, UUID()}; return &info; } \

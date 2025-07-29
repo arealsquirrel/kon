@@ -16,7 +16,7 @@ public:
 
 	operator u64() const { return uuid; }
 	
-	bool operator ==(const UUID &uuid) { return (uuid.uuid == uuid); }
+	bool operator ==(const UUID &_uuid) { return (_uuid.uuid == uuid); }
 
 public:
 	u64 uuid;

@@ -8,7 +8,6 @@
 #define KN_BIT(x) 1 << x
 
 namespace kon {
-
 	
 // type sizes as defined by this
 // https://en.cppreference.com/w/cpp/language/types.html

@@ -88,7 +88,7 @@ public:
 	}
 
 	void reset() {
-		for(int i = 0; i < m_count; i++) {
+		for(u32 i = 0; i < m_count; i++) {
 			m_buffer[i].~T();
 		}
 
