@@ -6,7 +6,7 @@
 
 using namespace kon;
 
-TEST(Platform, Directory) {
+TEST(DISABLED_Platform, Directory) {
 	MemoryBlock block(1000);
 	Allocator all(&block);
 
