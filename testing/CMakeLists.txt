@@ -14,5 +14,18 @@ target_link_libraries(
   GTest::gtest_main
 )
 
+# ---------- BENCHMARKS ----------
+file(GLOB_RECURSE BM_SRCS benchmarks/*.cpp)
+add_executable(
+	benchmarks
+	${BM_SRCS}
+)
+target_link_libraries(
+  benchmarks
+
+  benchmark::benchmark_main
+  kon-core
+)
+
 include(GoogleTest) # Required for gtest_discover_tests()
 gtest_discover_tests(tests)

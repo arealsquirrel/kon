@@ -61,4 +61,21 @@ TEST(Allocator, FreeListAllocator) {
 	EXPECT_EQ(s_what, 10);
 }
 
+TEST(Allocator, PageAllocator) {
+	s_what = 0;
+	MemoryBlock block(600);
+	PageAllocator all(&block, 100);
+	TestClass *a = all.allocate<TestClass>();
+	TestClass *b = all.allocate<TestClass>();
+	TestClass *c = all.allocate<TestClass>();
+	all.free(a);
+	all.free(b);
+	TestClass *d = all.allocate<TestClass>();
+	TestClass *e = all.allocate<TestClass>();
+	TestClass *f = all.allocate<TestClass>();
+
+	EXPECT_EQ(d->x, 4);
+	EXPECT_EQ(c->foo(), 5);
+	all.free(e, 5);
+}
 

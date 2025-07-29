@@ -10,3 +10,6 @@ CPMAddPackage(
   URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
 )
 
+CPMAddPackage("gh:google/benchmark@1.9.4")
+set(BENCHMARK_ENABLE_TESTING OFF)
+

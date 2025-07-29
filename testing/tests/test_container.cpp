@@ -150,9 +150,10 @@ TEST(Container, Set) {
 	set.add({3, "three"});
 	set.add({4, "four"});
 
+	set.add({4, "four"});
 	
 	set.remove(3);
-	set.add({5, "five"});
+	set.add({5, "two"});
 
 	EXPECT_EQ(set.has_key(3), false);
 	EXPECT_EQ(set.has_key(1), true);

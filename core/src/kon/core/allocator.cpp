@@ -1,6 +1,8 @@
 
 #include "allocator.hpp"
 #include "kon/core/assert.hpp"
+#include "kon/core/core.hpp"
+#include "kon/debug/log.hpp"
 #include <cstdlib>
 #include <new>
 
@@ -160,6 +162,55 @@ u32 FreeListAllocator::get_allocated_mem() const {
 		h = h->next;
 	}
 	return size;
+}
+
+#define KN_PGA_GET_BLOCK(index) reinterpret_cast<Header*>( \
+				m_block->get_memory() + ((m_pageSize + sizeof(Header)) * (index)))
+
+#define KN_PGA_BLOCK_MEM(block) KN_MEM_POINTER(block+1)
+
+PageAllocator::PageAllocator(const MemoryBlock *block, u32 pageSize) 
+	: Allocator(block), m_pageSize(pageSize) {
+	
+	m_maxPages = block->get_size() / (pageSize + sizeof(Header));
+
+	// make a linked list of free blocks
+	for(u32 i = 0; i < m_maxPages-1; i++) {
+		Header *h = KN_PGA_GET_BLOCK(i);
+		h->free = true;
+		h->nextfree = KN_PGA_GET_BLOCK(i+1);
+	}
+
+	m_freeTail = KN_PGA_GET_BLOCK(0);
+	m_freeHead = KN_PGA_GET_BLOCK(m_maxPages-1);
+	m_freeHead->free = true;
+}
+
+PageAllocator::~PageAllocator() = default;
+
+char *PageAllocator::allocate_mem(u32) {
+	// this is the main case for the allocator
+	char *mem = KN_PGA_BLOCK_MEM(m_freeTail);
+	m_freeTail->free = false;
+	m_freeTail = m_freeTail->nextfree;
+	m_usedPages++;
+
+	return mem;
+}
+
+void PageAllocator::free_mem(char *mem, u32) {
+	Header *h = reinterpret_cast<Header*>(mem-sizeof(Header));
+	KN_ASSERT(h->free == false, "you want to free an already freed header???");
+	h->free = true;
+	m_freeHead->nextfree = h;
+	m_freeHead = m_freeHead->nextfree;
+}
+
+/*
+ * @warning not implemented yet
+ */
+u32 PageAllocator::get_allocated_mem() const {
+	return 0;
 }
 
 }

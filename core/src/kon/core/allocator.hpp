@@ -158,6 +158,40 @@ private:
 	Header *m_end;
 };
 
+/*
+ * allocates memory in fixed size pages
+ */
+class PageAllocator : public Allocator {
+public:
+	struct alignas(8) Header {
+		bool free;
+		Header *nextfree;
+		// Header *prevfree;
+	};
+
+public:
+	PageAllocator(const MemoryBlock *block, u32 pageSize);
+	~PageAllocator();
+
+	char *allocate_mem(u32) override;
+
+	void free_mem(char *mem, u32) override;
+
+	/*
+	 * @warning not implemented yet
+	 */
+	u32 get_allocated_mem() const override;
+
+private:
+	u32 m_usedPages {0};
+	u32 m_pageSize;
+	u32 m_maxPages;
+	Header *m_freeTail;
+	Header *m_freeHead;
+	// Header *m_sPointer;
+};
+
+
 }
 
 #endif
