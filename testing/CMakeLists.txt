@@ -1,8 +1,6 @@
 
 project(testing_bencharking)
 
-enable_testing()
-
 # ---------- TESTING ----------
 file(GLOB_RECURSE TEST_SRCS tests/*.cpp)
 add_executable(

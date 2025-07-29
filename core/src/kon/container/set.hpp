@@ -1,7 +1,7 @@
 #ifndef KN_SET_HPP
 #define KN_SET_HPP
 
-/*
+#include "kon/container/arraylist.hpp"
 #include "kon/core/allocator.hpp"
 #include "kon/core/util.hpp"
 #include <functional>
@@ -26,21 +26,26 @@ struct SetTreeNode {
     SetTreeNode<Key, Value> *m_parent {nullptr};
 };
 
-
+/*
  * ok so this tree thing is horribly cache bad
  * its great for fragmentation, and i will fix this later
  * because i dont want to do that right now
- 
+ */
 template<class Key, class Value>
 class Set  {
 public:
     using TreeNode = SetTreeNode<Key, Value>;
 
     Set(Allocator *allocator)
-        : m_nil(), m_allocator(allocator) {
-        m_nil.m_left = &m_nil;
-        m_nil.m_right = &m_nil;
-        m_rootNode = &m_nil;
+        : m_allocator(allocator) {
+		
+		m_nil = reinterpret_cast<TreeNode*>(
+				m_allocator->allocate_mem(sizeof(TreeNode)));
+		m_nil->m_left = m_nil;
+		m_nil->m_right = m_nil;
+		m_nil->m_parent = nullptr;
+		m_nil->m_color = false;
+		m_rootNode = m_nil;
     }
 
     ~Set() {
@@ -49,16 +54,33 @@ public:
 
 public:
     void clear(TreeNode *from) {
-        while (from != &m_nil) {
-            if(from->m_left == &m_nil && from->m_right == &m_nil) {
+        while (from != m_nil) {
+            if(from->m_left == m_nil && from->m_right == m_nil) {
 				m_allocator->free(from);
                 return;
             }
+
             clear(from->m_left);
-            from->m_left = &m_nil;
+            from->m_left = m_nil;
             clear(from->m_right);
-            from->m_right = &m_nil;
+            from->m_right = m_nil;
         }
+
+		// m_nodes.reset();
+    }
+
+    TreeNode *minimum(TreeNode *node) {
+        while (node->m_left != m_nil) {
+            node = node->m_left;
+        }
+        return node;
+    }
+
+    TreeNode *maximum(TreeNode *node) {
+        while (node->m_right != m_nil) {
+            node = node->m_right;
+        }
+        return node;
     }
 
 private:
@@ -72,20 +94,6 @@ private:
         }
 
         v->m_parent = u->m_parent;
-    }
-
-    TreeNode *minimum(TreeNode *node) {
-        while (node->m_left != &m_nil) {
-            node = node->m_left;
-        }
-        return node;
-    }
-
-    TreeNode *maximum(TreeNode *node) {
-        while (node->m_right != &m_nil) {
-            node = node->m_right;
-        }
-        return node;
     }
 
     void delete_fix(TreeNode *x) {
@@ -148,23 +156,23 @@ private:
         x->m_color = 0;
     }
 
-
 public:
-    Pair<const Key, Value> &add(const Key key, const Value &element) {
-        u64 hash = m_hash(key);
+    Pair<const Key, Value> &add(const Pair<const Key, Value> &pair) {
+        u64 hash = m_hash(pair.first);
         TreeNode *parent = nullptr;
         TreeNode *curr = m_rootNode;
-        while (curr != &m_nil) {
+        while (curr != m_nil) {
             parent = curr;
-            if(curr->m_elementHash > hash) {
+            if(m_hash(curr->m_pair.first) > hash) {
                 curr = curr->m_left;
             } else {
                 curr = curr->m_right;
             }
         }
 
-        // TreeNode *node = (new TreeNode(element, key, true, &m_nil, &m_nil, parent));
-		TreeNode *node = m_allocator->allocate<TreeNode>(element, key, true, &m_nil, &m_nil, parent);
+		TreeNode *node = m_allocator->allocate<TreeNode>(1, pair.first, pair.second,
+		 		true, m_nil, m_nil, parent);
+		// TreeNode *node = m_nodes.add()
 
         if(parent == nullptr) {
             m_rootNode = node;
@@ -176,7 +184,7 @@ public:
 
         if(node->m_parent == nullptr) {
             node->m_color = 0;
-            return node->m_element;
+            return node->m_pair;
         }
 
         if(node->m_parent->m_parent == nullptr) return node->m_pair;
@@ -188,10 +196,10 @@ public:
         TreeNode *y = node;
         TreeNode *x = nullptr;
         int y_original_color = y->m_color;
-        if (node->m_left == &m_nil) {
+        if (node->m_left == m_nil) {
             x = node->m_right;
             rb_transplant(node, node->m_right);
-        } else if (node->m_right == &m_nil) {
+        } else if (node->m_right == m_nil) {
             x = node->m_left;
             rb_transplant(node, node->m_left);
         } else {
@@ -222,7 +230,7 @@ public:
     inline TreeNode *find_node(const Key key) const {
 		u64 hash = m_hash(key);
         TreeNode *curr = m_rootNode;
-        while(curr != &m_nil) {
+        while(curr != m_nil) {
             if(m_hash(curr->m_pair.first) == hash) return curr;
             if(m_hash(curr->m_pair.first) > hash) {
                 curr = curr->m_left;
@@ -234,7 +242,7 @@ public:
     }
 
 	inline bool has_key(const Key key) {
-		return (find_node(key) != &m_nil);
+		return (find_node(key) != m_nil);
 	}
 
     inline Pair<const Key, Value> &find(const Key key) { 
@@ -243,7 +251,7 @@ public:
 
     inline TreeNode *get_root() const { return m_rootNode; } 
 
-	inline void remove(const Key key) const {
+	inline void remove(const Key key) {
 		delete_node(find_node(key));
 	}
 
@@ -252,14 +260,14 @@ private:
         // set y to be the right child of x
         TreeNode *y = x->m_right;
         x->m_right = y->m_left;
-        if(y->m_left != &m_nil) {
+        if(y->m_left != m_nil) {
             y->m_left->m_parent = x;
         } 
         
         y->m_parent = x->m_parent;
         if(x->m_parent == nullptr) {
             m_rootNode = y;
-            x->m_parent = &m_nil;
+            x->m_parent = m_nil;
         } else if(x == x->m_parent->m_left) {
             x->m_parent->m_left = y;
         } else {
@@ -272,14 +280,14 @@ private:
     void rotate_right(TreeNode *x) {
         TreeNode *y = x->m_left;
         x->m_left = y->m_right;
-        if(y->m_right != &m_nil) {
+        if(y->m_right != m_nil) {
             y->m_right->m_parent = x;
         }
 
         y->m_parent = x->m_parent;
         if(x->m_parent == nullptr) {
             m_rootNode = y;
-            y->m_parent == &m_nil;
+            y->m_parent = m_nil;
         }else if(x == x->m_parent->m_right) {
             x->m_parent->m_right = y;
         } else {
@@ -303,11 +311,11 @@ private:
                 } else {
                     if(from == from->m_parent->m_right) {
                         from = from->m_parent;
-                        rotateLeft(from);
+                        rotate_left(from);
                     }
                     from->m_parent->m_color = 0;
                     from->m_parent->m_parent->m_color = 1;
-                    rotateRight(from->m_parent->m_parent);
+                    rotate_right(from->m_parent->m_parent);
                 }
             } else {
                 TreeNode *uncle = from->m_parent->m_parent->m_left;
@@ -319,11 +327,11 @@ private:
                 } else {
                     if(from == from->m_parent->m_left) {
                         from = from->m_parent;
-                        rotateRight(from);
+                        rotate_right(from);
                     }
                     from->m_parent->m_color = 0;
                     from->m_parent->m_parent->m_color = 1;
-                    rotateLeft(from->m_parent->m_parent);
+                    rotate_left(from->m_parent->m_parent);
                 }
             }
         }
@@ -334,11 +342,11 @@ private:
 private:
     size_t m_nodeCount {0};
     TreeNode *m_rootNode {nullptr};
-    TreeNode m_nil;
+    TreeNode *m_nil=nullptr;
 	std::hash<Key> m_hash;
 	Allocator *m_allocator;
 };
 
 }
-*/
+
 #endif

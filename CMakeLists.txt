@@ -9,6 +9,8 @@ include(cmake/get_packages.cmake)
 
 project(kon LANGUAGES CXX)
 
+enable_testing()
+
 add_subdirectory(core)
 add_subdirectory(editor)
 add_subdirectory(testing)

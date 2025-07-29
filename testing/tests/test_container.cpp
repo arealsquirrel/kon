@@ -1,4 +1,5 @@
 
+#include "kon/container/circular_buffer.hpp"
 #include "kon/container/hashmap.hpp"
 #include "kon/container/set.hpp"
 #include "kon/container/string.hpp"
@@ -122,5 +123,39 @@ TEST(Container, Hashmap) {
 	EXPECT_EQ(map.has_key(2), true);
 	EXPECT_STREQ("one", map[1].second.c_str());
 	EXPECT_STREQ("five", map[5].second.c_str());
+}
+
+TEST(Container, CircleQueue) {
+	MemoryBlock block(1204);
+	Allocator fa(&block);
+
+	CircleBuffer<int> queue(&fa, 3);
+	queue.enqueue(1);
+	queue.enqueue(2);
+	queue.enqueue(3);
+
+	EXPECT_EQ(queue.get_front(), 1);
+	EXPECT_EQ(queue.get_rear(), 3);
+	EXPECT_EQ(queue.dequeue(), 1);
+	EXPECT_EQ(queue.get_front(), 2);
+}
+
+TEST(Container, Set) {
+	MemoryBlock block(1204);
+	Allocator fa(&block);
+
+	Set<int, ShortString> set(&fa);
+	set.add({1, "one"});
+	set.add({2, "two"});
+	set.add({3, "three"});
+	set.add({4, "four"});
+
+	
+	set.remove(3);
+	set.add({5, "five"});
+
+	EXPECT_EQ(set.has_key(3), false);
+	EXPECT_EQ(set.has_key(1), true);
+	EXPECT_STREQ(set.find(2).second.c_str(), "two");
 }
 
