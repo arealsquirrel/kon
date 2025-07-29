@@ -1,10 +1,13 @@
 #ifndef KN_DIRECTORY_HPP
 #define KN_DIRECTORY_HPP
 
+#include "kon/container/arraylist.hpp"
 #include "kon/container/string.hpp"
+#include "kon/core/allocator.hpp"
 #include "kon/core/core.hpp"
 
 namespace kon {
+
 
 enum FilePermissions : u8 {
 	FilePermissions_None = KN_BIT(0),
@@ -14,10 +17,21 @@ enum FilePermissions : u8 {
 };
 
 struct PathStat {
+	bool valid;
 	bool directory;
 	u32 size;
 	u8 permissions;
 };
+
+class Directory;
+
+namespace platform {
+
+PathStat get_path_stat(const char *path);
+void iterate_directory(Allocator *allocator, const char *path, ArrayList<Directory> &arr);
+
+}
+
 
 /*
  * defines a platform dependent directory class
@@ -30,10 +44,23 @@ public:
 
 public:
 	PathStat get_stat() const { return m_stat; }
-	bool get_valid() const { return m_valid; }
+	bool get_valid() const { return m_stat.valid; }
+
+	bool operator ==(bool b) { return m_stat.valid = b; }
+
+	const String &get_string() const { return m_path; }
+
+	Directory operator +(const char *str) const {
+		String cpy(m_path);
+		return Directory(cpy.append(str));
+	}
+
+	void operator +=(const char *str) {
+		m_path.append(str);
+		m_stat = platform::get_path_stat(m_path.c_str());
+	}
 
 private:
-	bool m_valid;
 	PathStat m_stat;
 	String m_path;
 };

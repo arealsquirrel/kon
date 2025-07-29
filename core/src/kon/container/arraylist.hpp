@@ -75,7 +75,7 @@ public:
 		}
 
 		T *temp = reinterpret_cast<T*>(m_allocator->allocate_mem(sizeof(T) * size));
-		for(int i = 0; i < m_count; i++) {
+		for(u32 i = 0; i < m_count; i++) {
 			new (temp+i) T(m_buffer[i]);
 
 			m_buffer[i].~T();
@@ -109,7 +109,7 @@ public:
 
 public:
 	void for_each(ForEachFunction<T> func) {
-		for(int i = 0; i < m_count; i++) {
+		for(u32 i = 0; i < m_count; i++) {
 			func(m_buffer[i], i);
 		}
 	}
