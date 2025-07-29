@@ -100,7 +100,7 @@ static void BENCHMARK_hashmap(benchmark::State &state) {
 
 static void BENCHMARK_set(benchmark::State &state) {
 	MemoryBlock block(1000 * 2 * sizeof(Pair<int,ShortString>));
-	PageAllocator all(&block, sizeof(SetTreeNode<int,ShortString>)+20);
+	PageAllocator all(&block, sizeof(SetTreeNode<int,ShortString>));
 	Set<int, ShortString> set(&all);
 
 	for(auto _ : state) {
@@ -115,17 +115,17 @@ static void BENCHMARK_set(benchmark::State &state) {
 }
 
 static void BENCHMARK_setLookup(benchmark::State &state) {
-	MemoryBlock block(1000 * 2 * sizeof(Pair<int,ShortString>));
-	PageAllocator all(&block, sizeof(SetTreeNode<int,ShortString>)+20);
+	MemoryBlock block(10000 * 2 * sizeof(Pair<int,ShortString>));
+	PageAllocator all(&block, sizeof(SetTreeNode<int,ShortString>));
 	Set<int, ShortString> set(&all);
 
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 10000; i++) {
 		set.add({i, ShortString(std::to_string(i).c_str())});
 	}
 
 	u32 add = 0;
 	for(auto _ : state) {
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 10000; i++) {
 			add += set.find(i).first;
 		}
 	}
@@ -137,13 +137,13 @@ static void BENCHMARK_stdSetLookup(benchmark::State &state) {
 
 	std::map<int, ShortString> set;
 
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 10000; i++) {
 		set[i] = ShortString(std::to_string(i).c_str());
 	}
 
 	u32 add = 0;
 	for(auto _ : state) {
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 10000; i++) {
 			add += set.find(i)->first;
 		}
 	}
@@ -152,15 +152,11 @@ static void BENCHMARK_stdSetLookup(benchmark::State &state) {
 }
 
 static void BENCHMARK_stdSet(benchmark::State &state) {
-	// MemoryBlock block(1000 * 6 * sizeof(Pair<int,ShortString>));
-	// FreeListAllocator all(&block);
-	// Set<int, ShortString> set(&all);
 	std::map<int, ShortString> set;
 
 	for(auto _ : state) {
 		for (int i = 0; i < 1000; i++) {
 			set[i] = ShortString(std::to_string(i).c_str());
-			// set.add({i, });
 		}
 
 		for (int i = 0; i < 1000; i++) {
