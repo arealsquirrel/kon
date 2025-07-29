@@ -11,7 +11,11 @@ Module::~Module() = default;
 ModuleArray::ModuleArray(Engine *engine, Allocator *allocator) 
 	: Object(engine, allocator), m_modules(allocator, 10) {} // that should be enough <3
 	
-ModuleArray::~ModuleArray() = default;
+ModuleArray::~ModuleArray() {
+	m_modules.for_each([&](Module *m, u32){
+		m_allocator->free(m);
+	});
+}
 
 void ModuleArray::init_modules() {
 	m_modules.for_each([](Module *m, u32){

@@ -27,7 +27,7 @@ public:
 namespace std {
 	template<>
 	struct hash<kon::UUID> {
-		std::size_t operator()(const kon::UUID &uuid) {
+		std::size_t operator()(const kon::UUID &uuid) const {
 			return uuid.uuid;
 		}
 	};

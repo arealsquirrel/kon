@@ -1,6 +1,7 @@
 #ifndef KN_ARRAYLIST_HPP
 #define KN_ARRAYLIST_HPP
 
+#include "kon/debug/log.hpp"
 #include <kon/core/core.hpp>
 #include <kon/core/util.hpp>
 #include <kon/core/allocator.hpp>
@@ -36,7 +37,7 @@ public:
 
 		resize(arraylist.m_size);
 
-		for(int i = 0; i < arraylist.m_count; i++) {
+		for(u32 i = 0; i < arraylist.m_count; i++) {
 			add(arraylist.get_array()[i]);
 		}
 	}
@@ -88,12 +89,20 @@ public:
 	}
 
 	void reset() {
+		if(m_count == 0) return;
+
 		for(u32 i = 0; i < m_count; i++) {
 			m_buffer[i].~T();
 		}
 
 		m_allocator->free_mem(KN_MEM_POINTER(m_buffer), get_byte_size());
 	}
+
+	void erase(u32 index) {
+		move_elements(index, index+1, m_size-index-1);
+		m_count--;
+    }
+
 
 	u32 get_byte_size() const { return sizeof(T) * m_size; }
 	u32 get_size() const { return m_size; }
@@ -112,6 +121,13 @@ public:
 		for(u32 i = 0; i < m_count; i++) {
 			func(m_buffer[i], i);
 		}
+	}
+
+private:
+	void move_elements(size_t dest, size_t source, size_t num) {
+		std::copy(m_buffer + source,
+				 m_buffer + source + num,
+				 m_buffer + dest);
 	}
 
 private:

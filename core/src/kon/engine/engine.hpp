@@ -2,6 +2,7 @@
 #define KN_ENGINE_HPP
 
 #include "kon/core/allocator.hpp"
+#include "kon/core/events.hpp"
 #include "kon/core/object.hpp"
 #include "kon/engine/module.hpp"
 #include <kon/core/core.hpp>
@@ -27,6 +28,7 @@ public:
 	StackAllocator *get_allocator_frame() { return &m_frameAllocator; }
 
 	ModuleArray &get_modules() { return m_moduleArray; }
+	EventBus &get_event_bus() { return m_eventBus; }
 
 private:
 
@@ -39,6 +41,7 @@ private:
 	
 	ModuleArray m_moduleArray;
 
+	EventBus m_eventBus;
 };
 
 }

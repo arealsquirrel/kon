@@ -19,7 +19,7 @@ KN_OBJECT(Module, Object)
 
 public:
 	Module(Engine *engine, Allocator *allocator);
-	~Module();
+	virtual ~Module();
 
 	virtual void init() = 0;
 	virtual void clean() = 0;

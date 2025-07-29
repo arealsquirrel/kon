@@ -13,7 +13,8 @@ Engine::Engine(EngineCreateInfo info)
 	  m_engineFrameBlock(m_block.get_memory() + m_enginePersistantBlock.get_size(), info.memoryBudget * .25),
 	  m_engineMemory(&m_enginePersistantBlock),
 	  m_frameAllocator(&m_engineFrameBlock),
-	  m_moduleArray(this, reinterpret_cast<Allocator*>(&m_engineMemory)) {}
+	  m_moduleArray(this, reinterpret_cast<Allocator*>(&m_engineMemory)),
+	  m_eventBus(&m_engineMemory) {}
 
 Engine::~Engine() = default;
 
