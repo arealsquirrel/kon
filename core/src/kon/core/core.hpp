@@ -5,6 +5,7 @@
 
 #define KN_MEM_POINTER(var) reinterpret_cast<char*>(var)
 
+#define KN_BIT(x) 1 << x
 
 namespace kon {
 

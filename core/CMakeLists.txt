@@ -1,7 +1,14 @@
 project (kon-core VERSION 1.0.0)
 
 file(GLOB_RECURSE SRCS src/kon/*.cpp)
-file(GLOB_RECURSE HDRS src/kon/*.hpp)
+file(GLOB_RECURSE WINDOWS_SRCS src/platform/windows/*.cpp)
+file(GLOB_RECURSE LINUX_SRCS    src/platform/linux/*.cpp)
+
+if (WIN32)
+	list(APPEND SRCS ${WINDOWS_SRCS})
+elseif(UNIX)
+	list(APPEND SRCS ${LINUX_SRCS})
+endif (WIN32)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
