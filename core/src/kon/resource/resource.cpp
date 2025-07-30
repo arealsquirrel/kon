@@ -1,18 +1,72 @@
 
 #include "resource.hpp"
 
+#include <fstream>
+#include <nlohmann/json.hpp>
+
 namespace kon {
 
-Resource::Resource(Allocator *allocator,
-		Directory path, ShortString name,
-		u32 size, UUID groupID)
-	: m_allocator(allocator), m_path(path), m_name(name),
-	  m_size(size), m_groupID(groupID), m_instanceID() {}
+Resource::Resource(Allocator *allocator, Engine *engine,
+		Directory path, ShortString name, UUID groupID)
+	: m_allocator(allocator), m_engine(engine), m_path(path), m_name(name),
+	  m_groupID(groupID), m_instanceID() {}
 
 Resource::~Resource() {
 
 }
 
+
+Pair<char*, u32> Resource::read_file_strings(ResourceLoadError *error, const char *path) {
+	std::ifstream file(path);
+
+	if(file.fail()) {
+		*error = ResourceLoadError_BadPath;
+		KN_CORE_WARN("read_file_bytes ifstream failed on file {}", path);
+		return {nullptr, 0};
+	}
+
+	file.seekg(0, std::ios::end);
+	size_t size = file.tellg();
+	file.seekg(0);
+
+	char *buffer = m_allocator->allocate_mem(size); 
+	file.read(buffer, size);
+
+	return Pair<char*, u32>(buffer, size);
+}
+
+Pair<char*, u32> Resource::read_file_bytes(ResourceLoadError *error, const char *path) {
+	std::ifstream file(path, std::ios::ate | std::ios::binary);
+	
+	if(file.fail()) {
+		*error = ResourceLoadError_BadPath;
+		KN_CORE_WARN("read_file_bytes ifstream failed on file {}", path);
+		return {nullptr, 0};
+	}
+	
+	u32 fileSize = (size_t) file.tellg();
+	file.seekg(0);
+	
+	char *buffer = m_allocator->allocate_mem(fileSize);
+	file.read(buffer, fileSize);
+	return Pair<char*, u32>(buffer, fileSize);
+}
+
+
+nlohmann::json Resource::read_file_json(ResourceLoadError *error, const char *path) {
+	std::ifstream file(path);
+	nlohmann::json j;
+
+	try {
+		j = nlohmann::json::parse(file); 
+	} catch (nlohmann::json::exception &exception) {
+		KN_CORE_ERROR("nlohmann::json excpetion thrown while reading file {}\n \
+				{}",path, exception.what());
+		*error = ResourceLoadError_APIError;
+	}
+	
+	return j;
+}
 
 }
 

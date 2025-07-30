@@ -5,7 +5,10 @@
 #include "kon/core/allocator.hpp"
 #include "kon/core/directory.hpp"
 #include "kon/core/uuid.hpp"
+#include "kon/engine/engine.hpp"
 #include <kon/core/core.hpp>
+
+#include <nlohmann/json_fwd.hpp>
 
 namespace kon {
 
@@ -30,16 +33,14 @@ enum ResourceLoadError {
 class Resource {
 public:
 	// the size paramater is the size of the resource in bytes
-	Resource(Allocator *allocator,
-			Directory path, ShortString name,
-			u32 size, UUID groupID=0);
+	Resource(Allocator *allocator, Engine *engine,
+			Directory path, ShortString name, UUID groupID=0);
 	virtual ~Resource();
 
 	Directory get_path() const { return m_path; }
 	ShortString get_name() const { return m_name; }
 	UUID get_group_uuid() const { return m_groupID; }
 	UUID get_instance_uuid() const { return m_instanceID; }
-	u32 get_size() const { return m_size; }
 
 public:
 	/*
@@ -60,14 +61,29 @@ public:
 	 */
 	virtual void unload_resource(ResourceLoadError *error) = 0;
 	
-public:
+private:
+	/*
+	 * reads a file as characters and returns a char* 
+	 * YOU MUST FREE THIS MEMORY YOURSELF
+	 */
+	Pair<char*, u32> read_file_strings(ResourceLoadError *error, const char *path);
+	
+	/*
+	 * reads a file as bytes and returns a char* 
+	 * YOU MUST FREE THIS MEMORY YOURSELF
+	 */
+	Pair<char*, u32> read_file_bytes(ResourceLoadError *error, const char *path);
 
+	/*
+	 * returns the json of the file 
+	 */
+	nlohmann::json read_file_json(ResourceLoadError *error, const char *path);
 
 private:
 	Allocator *m_allocator;
+	Engine *m_engine;
 	Directory m_path;
 	ShortString m_name;
-	u32 m_size;
 	UUID m_groupID;
 	UUID m_instanceID;
 };

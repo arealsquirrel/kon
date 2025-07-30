@@ -1,24 +1,20 @@
 
 #include "kon/core/assert.hpp"
-// #include "kon/debug/instrumentation.hpp"
+#include "kon/core/library.hpp"
 #include "kon/debug/timer.hpp"
 #include <chrono>
 #include <kon/debug/log.hpp>
 
+using namespace kon;
+
 int main() {
-	{
-		kon::Timer timer;
-		timer.start_timer();
+	LibraryHandle handle = platform::load_library("modules/libexample_module.so");
+	if(handle == nullptr) KN_CORE_ERROR("uh oh");
 
-		KN_CORE_TRACE("hello!");
-		KN_ERROR("ahh");
+	typedef int (*lmao_function_pointer)();
 
-		timer.end_timer();
-	
-
-		KN_CORE_INFO("time {}", timer.get_time<std::chrono::microseconds>());
-	}
-	
-	KN_ASSERT(true, "oh no!");
+	lmao_function_pointer f;
+	f = (lmao_function_pointer) platform::load_function(handle, "lmao");
+	f();
 }
 
