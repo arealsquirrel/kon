@@ -10,15 +10,28 @@ template<typename T>
 using ForEachFunction = std::function<void(T &element, u32 index)>;
 
 struct Point {
+public:
 	int x;
 	int y;
 };
 
 struct Rect {
+public:
 	unsigned int width;
 	unsigned int height;
 	int x;
 	int y;
+};
+
+struct Color {
+public:
+	u8 rgba[4];
+};
+
+struct Vector3 {
+	float x;
+	float y;
+	float z;
 };
 
 template<typename First, typename Second>
