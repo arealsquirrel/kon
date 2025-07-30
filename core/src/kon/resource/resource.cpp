@@ -15,6 +15,34 @@ Resource::~Resource() {
 
 }
 
+void Resource::load_resource(ResourceLoadError *error) {
+	KN_ASSERT(m_loadState != ResourceLoadState_FullyLoaded, 
+			"resource already loaded. If you are remaking the resource, please call unload first");
+
+	if(*error != ResourceLoadError_None) {
+		KN_CORE_WARN("Resource::load returning with error {}", 
+				load_error_to_string(*error));
+
+		m_loadState = ResourceLoadState_Unloaded;
+	}
+
+	m_loadState = ResourceLoadState_FullyLoaded;
+}
+
+void Resource::load_metadata(ResourceLoadError *error) {
+	if(*error != ResourceLoadError_None) {
+		KN_CORE_WARN("Resource::load_metadata returning with error {}", 
+				load_error_to_string(*error));
+
+		m_loadState = ResourceLoadState_Unloaded;
+	}
+
+	m_loadState = ResourceLoadState_Partialy;
+}
+
+void Resource::unload_resource() {
+	KN_ASSERT(m_loadState != ResourceLoadState_Unloaded, "resource already unloaded");
+}
 
 Pair<char*, u32> Resource::read_file_strings(ResourceLoadError *error, const char *path) {
 	std::ifstream file(path);

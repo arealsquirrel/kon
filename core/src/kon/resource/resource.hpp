@@ -12,6 +12,7 @@
 
 namespace kon {
 
+
 enum ResourceLoadError {
 	ResourceLoadError_None = 0,
 
@@ -24,6 +25,40 @@ enum ResourceLoadError {
 	// the API used to load the file messed up
 	ResourceLoadError_APIError
 };
+
+enum ResourceLoadState {
+	ResourceLoadState_Unloaded,
+
+	/*
+	 * this means that the metadata is loaded but not the
+	 * full resource
+	 */
+	ResourceLoadState_Partialy,
+	
+	/* the full resource */
+	ResourceLoadState_FullyLoaded
+};
+
+constexpr const char *load_error_to_string(ResourceLoadError error) {
+	switch (error) {
+		case ResourceLoadError_None: return "none";
+		case ResourceLoadError_BadPath: return "bad path";
+		case ResourceLoadError_BadFormat: return "bad format";
+		case ResourceLoadError_APIError: return "api error";
+	}
+
+	return "";
+}
+
+constexpr const char *load_state_to_string(ResourceLoadState state) {
+	switch(state) {
+		case ResourceLoadState_Unloaded: return "unloaded";
+		case ResourceLoadState_FullyLoaded: return "fully loaded";
+		case ResourceLoadState_Partialy: return "partialy loaded";
+	}
+
+	return "";
+}
 
 /*
  * this class is not managing the internal state of the resource
@@ -47,19 +82,19 @@ public:
 	 * loads the memory of the resource off the computer
 	 * EX: loads the image into memory
 	 */
-	virtual void load_resource(ResourceLoadError *error) = 0;
+	virtual void load_resource(ResourceLoadError *error);
 	
 	/*
 	 * loads data about the memory into memory
 	 * EX: loads the image size and channels into memory
 	 */
-	virtual void load_metadata(ResourceLoadError *error) = 0;
+	virtual void load_metadata(ResourceLoadError *error);
 
 	/*
 	 * unloads the resource from memory,
 	 * keeps the metadata
 	 */
-	virtual void unload_resource(ResourceLoadError *error) = 0;
+	virtual void unload_resource();
 	
 private:
 	/*
@@ -86,6 +121,8 @@ private:
 	ShortString m_name;
 	UUID m_groupID;
 	UUID m_instanceID;
+
+	ResourceLoadState m_loadState;
 };
 
 }

@@ -1,0 +1,5 @@
+#ifndef KN_GRAPHICS_MODULE_HPP
+#define KN_GRAPHICS_MODULE_HPP
+
+
+#endif

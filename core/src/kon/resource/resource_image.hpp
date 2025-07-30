@@ -16,7 +16,7 @@ public:
 
 	void load_resource(ResourceLoadError *error) override;
 	void load_metadata(ResourceLoadError *error) override;
-	void unload_resource(ResourceLoadError *error) override;
+	void unload_resource() override;
 };
 
 }

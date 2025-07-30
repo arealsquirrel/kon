@@ -14,15 +14,15 @@ ResourceImage::~ResourceImage() {
 }
 
 void ResourceImage::load_resource(ResourceLoadError *error) {
-	
+	Resource::load_resource(error);
 }
 
 void ResourceImage::load_metadata(ResourceLoadError *error) {
-
+	Resource::load_metadata(error);
 }
 
-void ResourceImage::unload_resource(ResourceLoadError *error) {
-
+void ResourceImage::unload_resource() {
+	Resource::unload_resource();
 }
 
 }
