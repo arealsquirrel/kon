@@ -15,6 +15,7 @@ project(kon LANGUAGES CXX)
 enable_testing()
 
 add_subdirectory(core)
+add_subdirectory(modules)
 add_subdirectory(editor)
 add_subdirectory(testing)
 
