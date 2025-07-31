@@ -28,12 +28,6 @@ public:
 	u8 rgba[4];
 };
 
-struct Vector3 {
-	float x;
-	float y;
-	float z;
-};
-
 template<typename First, typename Second>
 struct Pair {
 public:

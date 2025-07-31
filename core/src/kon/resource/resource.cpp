@@ -8,8 +8,8 @@ namespace kon {
 
 Resource::Resource(Allocator *allocator, Engine *engine,
 		Directory path, ShortString name, UUID groupID)
-	: m_allocator(allocator), m_engine(engine), m_path(path), m_name(name),
-	  m_groupID(groupID), m_instanceID() {}
+	: Object(engine, allocator), 
+	  m_path(path), m_name(name), m_groupID(groupID) {}
 
 Resource::~Resource() {
 

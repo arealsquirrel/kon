@@ -13,7 +13,7 @@ endif (WIN32)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 # Add a library with the above sources
-add_library(${PROJECT_NAME} ${SRCS} ${HDRS})
+add_library(${PROJECT_NAME} ${SRCS} ${HDRS} vendor/implementation.cpp)
 
 target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/src

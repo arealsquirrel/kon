@@ -4,6 +4,7 @@
 #include "kon/container/string.hpp"
 #include "kon/core/allocator.hpp"
 #include "kon/core/directory.hpp"
+#include "kon/core/object.hpp"
 #include "kon/core/uuid.hpp"
 #include "kon/engine/engine.hpp"
 #include <kon/core/core.hpp>
@@ -65,7 +66,9 @@ constexpr const char *load_state_to_string(ResourceLoadState state) {
  * that job is for the resource cache. The idea here is to 
  * focus on implementing the resource rather than having to fuck around with state
  */
-class Resource {
+class Resource : public Object {
+KN_OBJECT(Resource, Object)
+
 public:
 	// the size paramater is the size of the resource in bytes
 	Resource(Allocator *allocator, Engine *engine,
@@ -75,7 +78,6 @@ public:
 	Directory get_path() const { return m_path; }
 	ShortString get_name() const { return m_name; }
 	UUID get_group_uuid() const { return m_groupID; }
-	UUID get_instance_uuid() const { return m_instanceID; }
 
 public:
 	/*
@@ -96,7 +98,7 @@ public:
 	 */
 	virtual void unload_resource();
 	
-private:
+protected:
 	/*
 	 * reads a file as characters and returns a char* 
 	 * YOU MUST FREE THIS MEMORY YOURSELF
@@ -114,13 +116,10 @@ private:
 	 */
 	nlohmann::json read_file_json(ResourceLoadError *error, const char *path);
 
-private:
-	Allocator *m_allocator;
-	Engine *m_engine;
+protected:
 	Directory m_path;
 	ShortString m_name;
 	UUID m_groupID;
-	UUID m_instanceID;
 
 	ResourceLoadState m_loadState;
 };
