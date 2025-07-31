@@ -45,7 +45,7 @@ public:
 		m_nodes = reinterpret_cast<Node*>(
 				m_allocator->allocate_mem(m_buckets * c_skipIndex * sizeof(Node)));
 
-		for (int i = 0; i < m_buckets*c_skipIndex; i++) {
+		for (u32 i = 0; i < m_buckets*c_skipIndex; i++) {
 			m_nodes[i].psl = c_max_psl;
 		}
 	}
@@ -131,7 +131,7 @@ public:
 	 * does not fuck with indexes
 	 */
 	void for_each(std::function<void( Pair<const Key, Value>& )> func) {
-		for(int i = 0; i < get_size(); i++) {
+		for(u32 i = 0; i < get_size(); i++) {
 			if(m_nodes[i].psl != c_max_psl) {
 				func(m_nodes[i].pair);
 			}

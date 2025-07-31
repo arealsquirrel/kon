@@ -39,6 +39,7 @@ void iterate_directory(Allocator *allocator, const char *path, ArrayList<Directo
 class Directory {
 public:
 	Directory(String path);
+	Directory(const char *str, Allocator *allocator);
 	Directory(const Directory &directory);
 	~Directory();
 
@@ -50,16 +51,32 @@ public:
 
 	const String &get_string() const { return m_path; }
 
-	// THIS FUNCTION DOES NOT WORK :((((
+	ShortString get_file_name() const;
+	ShortString get_file_extension() const;
+
 	Directory operator +(const char *str) {
 		String cpy(m_path.c_str(), m_path.get_allocator());
 		return Directory(cpy.append(str));
+	}
+
+	Directory operator +(String str) {
+		return *this + str.c_str();
+	}
+
+	Directory operator +(ShortString str) {
+		return *this + str.c_str();
+	}
+
+	Directory operator +(Directory dir) {
+		return *this + dir.m_path.c_str();
 	}
 
 	void operator +=(const char *str) {
 		m_path.append(str);
 		m_stat = platform::get_path_stat(m_path.c_str());
 	}
+
+	const char *c_str() const { return m_path.c_str(); }
 
 private:
 	PathStat m_stat;

@@ -55,6 +55,17 @@ public:
 		return *e;
 	}
 
+	T &add(const T &element, u32 index) {
+		if(m_count >= m_size) {
+			resize(m_size+1);
+		}
+
+		move_elements(index+1, index, m_size-m_count+1);
+		T *e = new (m_buffer+index) T(element);
+		m_count++;
+		return *e;
+	}
+
 	/*
 	 * removes the top item by just decrementing count
 	 * so the allocated size stays the same
@@ -96,6 +107,7 @@ public:
 		}
 
 		m_allocator->free_mem(KN_MEM_POINTER(m_buffer), get_byte_size());
+		m_buffer = nullptr;
 		m_count = 0;
 		m_size = 0;
 	}

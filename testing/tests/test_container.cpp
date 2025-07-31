@@ -54,6 +54,9 @@ TEST(Container, ShortString) {
 	EXPECT_STREQ(s.c_str(), "wow thats so cool");
 	EXPECT_EQ(s.index_of_char('o'), 1);
 	EXPECT_EQ(s.index_of_string("thats"), 4);	
+
+	EXPECT_STREQ(s.substring(0, 4).c_str(), "wow");
+	EXPECT_STREQ(s.substring(4, 9).c_str(), "thats");
 }
 
 TEST(Container, String) {
@@ -104,6 +107,16 @@ TEST(Container, ArrayList) {
 	EXPECT_EQ(newArray.get_size(), 4);
 	EXPECT_EQ(newArray[0].a, 4);
 	EXPECT_EQ(newArray.get_count(), 4);
+
+	ArrayList<int> iarray(&fa);
+	iarray.add(1);
+	iarray.add(2);
+	iarray.add(3);
+	iarray.add(2, 1);
+	
+	iarray.for_each([](int i, u32){
+		KN_CORE_TRACE("{}", i);
+	});
 }
 
 TEST(Container, Hashmap) {

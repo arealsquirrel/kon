@@ -39,12 +39,14 @@ public:
 
 public:
 	const char *c_str() const { return get_buffer(); }
+	virtual u32 get_size() const = 0;
 
 private:
 	virtual char *get_buffer() const = 0;
 	virtual void resize(u32 size) = 0;
-	virtual u32 get_size() = 0;
 };
+
+class ShortString;
 
 class String : public ImplString {
 public:
@@ -63,9 +65,12 @@ public:
 	void resize(u32 size) override;
 
 	char *get_buffer() const override { return m_buffer; }
-	u32 get_size() override { return m_size; }
+	u32 get_size() const override { return m_size; }
 
 	Allocator *get_allocator() const { return m_allocator; }
+
+	String substring(int a, int b) const;
+	ShortString short_substring(int a, int b) const;
 
 public:
 	String &append(const char *str);
@@ -89,9 +94,13 @@ public:
 		strcpy(get_buffer(), str);
 	}
 
+	ShortString substring(int a, int b) const;
+
 	char *get_buffer() const override { return const_cast<char*>(&m_buffer[0]); }
-	u32 get_size() override { return 256; }
+	u32 get_size() const override { return 256; }
 	void resize(u32) override {}
+
+	u64 hash() const;
 
 public:
 	ShortString &append(const char *str);
@@ -100,6 +109,15 @@ private:
 	char m_buffer[256];
 };
 
+}
+
+namespace std {
+	template<>
+	struct hash<kon::ShortString> {
+		std::size_t operator()(const kon::ShortString &string) const {
+			return string.hash();
+		}
+	};
 }
 
 #endif

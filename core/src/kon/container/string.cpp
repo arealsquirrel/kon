@@ -47,6 +47,20 @@ void String::resize(u32 size) {
 	m_size = size;
 }
 
+String String::substring(int a, int b) const {
+	String str(m_allocator);
+	str.resize(b-a+1);
+	memcpy(str.m_buffer, m_buffer+a, b-a);
+	str.m_buffer[b-a] = '\0';
+	return str;
+}
+
+ShortString String::short_substring(int a, int b) const {
+	ShortString s;
+	memcpy(s.get_buffer(), m_buffer+a, b-a);
+	return s;
+}
+
 ShortString::ShortString(const char *string) {
 	*this = string;
 }
@@ -54,6 +68,23 @@ ShortString::ShortString(const char *string) {
 ShortString &ShortString::append(const char *str) {
 	strcat(get_buffer(), str);
 	return *this;
+}
+
+
+ShortString ShortString::substring(int a, int b) const {
+	ShortString s;
+	memcpy(s.m_buffer, m_buffer+a, b-a);
+	return s;
+}
+
+u64 ShortString::hash() const {
+	const char *s = &m_buffer[0];
+	unsigned h = 37;
+   	while (*s) {
+   		h = (h * 54059) ^ (s[0] * 76963);
+		s++;
+   	}
+   	return h; // or return h % C;
 }
 
 }

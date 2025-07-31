@@ -36,7 +36,7 @@ public:
 	bool instance_of() const {
 		const TypeInfo *info = get_typeinfo();
 		while(info != nullptr) {
-			if(info->typeID == T::get_static_typeinfo().typeID) {
+			if(info->typeID == T::get_static_typeinfo()->typeID) {
 				return true;
 			}
 
@@ -48,13 +48,13 @@ public:
 
 	template<typename T>
 	inline T *cast() {
-		KN_ASSERT(instance_of<T>(), "this object {} is not an instance of T", *this);
+		KN_ASSERT(instance_of<T>(), "this object {} is not an instance of T", this->get_typeinfo()->name.c_str());
 		return dynamic_cast<T*>(this);
 	}
 
 	template<typename T>
 	inline const T *cast() const {
-		KN_ASSERT(instance_of<T>(), "this object {} is not an instance of T", *this);
+		KN_ASSERT(instance_of<T>(), "this object {} is not an instance of T", this->get_typeinfo()->name.c_str());
 		return dynamic_cast<T*>(this);
 	}
 
