@@ -100,6 +100,8 @@ public:
 TEST(Engine, module) {
 	EngineCreateInfo info {
 		400000,
+		400000,
+		400000
 	};
 	Engine engine(info);
 
@@ -117,6 +119,8 @@ TEST(Engine, module) {
 
 TEST(Engine, event) {
 	EngineCreateInfo info {
+		400000,
+		400000,
 		400000,
 	};
 

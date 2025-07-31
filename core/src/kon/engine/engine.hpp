@@ -11,7 +11,9 @@ namespace kon {
 
 struct EngineCreateInfo {
 
-u32 memoryBudget;
+u32 persistentMemorySize;
+u32 dynamicMemorySize;
+u32 frameMemorySize;
 
 };
 
@@ -23,9 +25,9 @@ public:
 	~Engine();
 
 public:
-	MemoryBlock *get_engine_block() { return &m_block; }
-	Allocator *get_allocator_engine() { return &m_testAllocator; }
-	StackAllocator *get_allocator_frame() { return &m_frameAllocator; }
+	Allocator *get_allocator_persistent() { return &m_persistentMemoryAllocator; }
+	Allocator *get_allocator_dynamic() { return &m_dynamicMemoryAllocator; }
+	Allocator *get_allocator_frame() { return &m_frameAllocator; }
 
 	ModuleArray &get_modules() { return m_moduleArray; }
 	EventBus &get_event_bus() { return m_eventBus; }
@@ -35,10 +37,13 @@ public:
 private:
 
 	/* a lot of memory stuff */
-	MemoryBlock m_block;
-	MemoryBlock m_enginePersistantBlock;
-	MemoryBlock m_engineFrameBlock;
-	FreeListAllocator m_engineMemory;
+	MemoryBlock m_persistentMemory;
+	FreeListAllocator m_persistentMemoryAllocator;
+
+	MemoryBlock m_dynamicMemory;
+	FreeListAllocator m_dynamicMemoryAllocator;
+
+	MemoryBlock m_frameMemory;
 	StackAllocator m_frameAllocator;
 
 	Allocator m_testAllocator;
