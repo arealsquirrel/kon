@@ -98,8 +98,9 @@ public:
 
 
 TEST(Engine, module) {
-	EngineCreateInfo info;
-	info.memoryBudget = 1000000;
+	EngineCreateInfo info {
+		400000,
+	};
 	Engine engine(info);
 
 	engine.get_modules().add_module<ModuleFoo>();
@@ -115,8 +116,10 @@ TEST(Engine, module) {
 }
 
 TEST(Engine, event) {
-	EngineCreateInfo info;
-	info.memoryBudget = 10000;
+	EngineCreateInfo info {
+		400000,
+	};
+
 	Engine engine(info);
 
 	

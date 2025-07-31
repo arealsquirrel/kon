@@ -1,0 +1,6 @@
+{
+	"name": "kon_primitaves",
+	"models_path":  "models/",
+	"textures_path": "textures/",
+	"shaders_path": "shaders/"
+}

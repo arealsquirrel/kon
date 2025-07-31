@@ -96,6 +96,8 @@ public:
 		}
 
 		m_allocator->free_mem(KN_MEM_POINTER(m_buffer), get_byte_size());
+		m_count = 0;
+		m_size = 0;
 	}
 
 	void erase(u32 index) {

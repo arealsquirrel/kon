@@ -11,7 +11,7 @@ namespace kon {
 ResourceModel::ResourceModel(Allocator *allocator, Engine *engine,
 			 Directory path, ShortString name, UUID groupID)
 	: Resource(allocator, engine, path, name, groupID),
-		m_verticies(allocator), m_indices(allocator) {}
+		m_verticies(allocator), m_indices(allocator,1) {}
 
 ResourceModel::~ResourceModel() {
 

@@ -50,8 +50,9 @@ public:
 
 	const String &get_string() const { return m_path; }
 
-	Directory operator +(const char *str) const {
-		String cpy(m_path);
+	// THIS FUNCTION DOES NOT WORK :((((
+	Directory operator +(const char *str) {
+		String cpy(m_path.c_str(), m_path.get_allocator());
 		return Directory(cpy.append(str));
 	}
 

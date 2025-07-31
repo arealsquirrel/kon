@@ -1,0 +1,6 @@
+#ifndef KN_RESOURCE_CACHE_HPP
+#define KN_RESOURCE_CACHE_HPP
+
+
+
+#endif

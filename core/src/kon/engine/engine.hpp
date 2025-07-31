@@ -24,11 +24,13 @@ public:
 
 public:
 	MemoryBlock *get_engine_block() { return &m_block; }
-	FreeListAllocator *get_allocator_engine() { return &m_engineMemory; }
+	Allocator *get_allocator_engine() { return &m_testAllocator; }
 	StackAllocator *get_allocator_frame() { return &m_frameAllocator; }
 
 	ModuleArray &get_modules() { return m_moduleArray; }
 	EventBus &get_event_bus() { return m_eventBus; }
+
+	void mem_dump();
 
 private:
 
@@ -38,6 +40,8 @@ private:
 	MemoryBlock m_engineFrameBlock;
 	FreeListAllocator m_engineMemory;
 	StackAllocator m_frameAllocator;
+
+	Allocator m_testAllocator;
 	
 	ModuleArray m_moduleArray;
 

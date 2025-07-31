@@ -65,6 +65,8 @@ public:
 	char *get_buffer() const override { return m_buffer; }
 	u32 get_size() override { return m_size; }
 
+	Allocator *get_allocator() const { return m_allocator; }
+
 public:
 	String &append(const char *str);
 

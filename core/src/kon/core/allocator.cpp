@@ -64,7 +64,7 @@ char *StackAllocator::allocate_mem(u32 size) {
 }
 
 void StackAllocator::free_mem(char *, u32 size) {
-	// KN_ASSERT(get_allocated_mem() - size < 0, "freeing more memory than the block");
+	KN_ASSERT(get_allocated_mem() - size >= 0, "freeing more memory than the block");
 	m_stackTop -= size;
 }
 
