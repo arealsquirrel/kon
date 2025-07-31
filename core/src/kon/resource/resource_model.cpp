@@ -1,6 +1,7 @@
 
 #include "resource_model.hpp"
 #include "kon/core/directory.hpp"
+#include "kon/debug/log.hpp"
 #include "kon/resource/resource.hpp"
 
 #include <../vendor/tiny_obj_loader.h>
@@ -20,9 +21,14 @@ void ResourceModel::load_resource(ResourceLoadError *error) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
-	std::string warn, err;
+	std::string err;
 
 	tinyobj::LoadObj(&attrib, &shapes, &materials, &err, m_path.get_string().c_str());
+	if(err.empty() == false) {
+		*error = ResourceLoadError_APIError;
+		KN_CORE_ERROR("ResourceModel {}\n tiny_obj_loader error {}", m_path.get_string().c_str(), err.c_str());
+		return;
+	}
 
 	std::unordered_map<Vertex, u32> uniqueVertices{};
 

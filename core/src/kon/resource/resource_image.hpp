@@ -68,6 +68,10 @@ public:
 	void load_metadata(ResourceLoadError *error) override;
 	void unload_resource() override;
 
+	u8 *get_image() const { return m_image; }
+	ColorChannels get_channels() const { return m_channels; }
+	const Meta &get_metadata() const { return m_metadata; }
+
 private:
 	u8 *m_image;
 	ColorChannels m_channels;
