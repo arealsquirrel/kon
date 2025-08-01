@@ -7,6 +7,8 @@
 #include "kon/resource/resource.hpp"
 #include <kon/core/core.hpp>
 #include <kon/math/vector.hpp>
+#include <kon/math/vector3.hpp>
+#include <kon/math/vector2.hpp>
 
 namespace kon {
 
@@ -49,9 +51,9 @@ private:
 namespace std {
     template<> struct hash<kon::ResourceModel::Vertex> {
         size_t operator()(kon::ResourceModel::Vertex const& vertex) const {
-            return ((kon::hash_vector(vertex.color.x, vertex.color.y, vertex.color.z) ^ 
-					(kon::hash_vector(vertex.position.x, vertex.position.y, vertex.position.z) << 1) >> 1) ^ 
-					(kon::hash_vector(vertex.texCoord.x, vertex.texCoord.y) << 1) << 1);
+            return ((kon::hash_vector(vertex.position) ^ 
+					(kon::hash_vector(vertex.texCoord) << 1) >> 1) ^ 
+					(kon::hash_vector(vertex.color) << 1) << 1);
         }
     };
 }
