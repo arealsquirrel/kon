@@ -8,12 +8,6 @@
 
 namespace kon {
 
-template<u8 size, typename Type>
-struct ImplVector {
-public:
-	constexpr u8 get_size() { return size; }
-};
-
 /*
  * template definition of a vector of variable size
  */
@@ -37,7 +31,7 @@ public:
 	}
 
 	u64 hash() const {
-		u64 seed = 3;
+		u64 seed = size;
 
 		// for_each([&](Type e, u32) {
 		for(int i = 0; i < size; i++) {
