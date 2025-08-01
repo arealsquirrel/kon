@@ -10,7 +10,7 @@ elseif(UNIX)
 	list(APPEND SRCS ${LINUX_SRCS})
 endif (WIN32)
 
-add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra)
 
 # Add a library with the above sources
 add_library(${PROJECT_NAME} ${SRCS} ${HDRS} vendor/implementation.cpp)

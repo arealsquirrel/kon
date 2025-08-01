@@ -8,8 +8,7 @@
 #include "kon/engine/engine.hpp"
 #include "kon/math/vector.hpp"
 #include "kon/resource/resource.hpp"
-#include <glm/ext/vector_float2.hpp>
-
+#include <kon/math/vector2.hpp>
 
 namespace kon {
 

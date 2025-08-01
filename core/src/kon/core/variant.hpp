@@ -8,7 +8,15 @@
 namespace kon {
 
 enum VariantType {
-	VariantType_u32
+	VariantType_None,
+	VariantType_int,
+	VariantType_uint,
+	VariantType_luint,
+	VariantType_float,
+	VariantType_double,
+	VariantType_Color,
+	VariantType_String,
+	VariantType_ShortString
 };
 
 /*
@@ -17,6 +25,17 @@ enum VariantType {
  */
 class Variant {
 public:
+	Variant(VariantType type);
+	~Variant();
+
+public:
+	VariantType get_type() const { return m_type; }
+
+	template<typename T>
+	T &get();
+
+	template<typename T>
+	void set(const T &t);
 
 private:
 	union {
@@ -25,10 +44,21 @@ private:
 		long unsigned int lui;
 		float f;
 		double d;
-		ShortString s;
+		String s;
+		ShortString ss;
 		Color col;
 	};
+
+	VariantType m_type;
 };
+
+/*
+ * template specilizations are in the source file.
+ * takes a type and outputs the coresponding variant type.
+ * if it is not a valid type, then it returns variant_none
+ */
+template<typename T>
+constexpr VariantType type_to_variant_type() { return VariantType_None; }
 
 }
 
