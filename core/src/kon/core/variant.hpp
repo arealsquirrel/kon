@@ -8,6 +8,7 @@
 namespace kon {
 
 enum VariantType {
+	VariantType_None,
 	VariantType_int,
 	VariantType_uint,
 	VariantType_luint,
@@ -50,6 +51,14 @@ private:
 
 	VariantType m_type;
 };
+
+/*
+ * template specilizations are in the source file.
+ * takes a type and outputs the coresponding variant type.
+ * if it is not a valid type, then it returns variant_none
+ */
+template<typename T>
+constexpr VariantType type_to_variant_type() { return VariantType_None; }
 
 }
 

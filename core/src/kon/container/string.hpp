@@ -100,7 +100,7 @@ public:
 	u32 get_size() const override { return 256; }
 	void resize(u32) override {}
 
-	u64 hash() const;
+	 u64 hash() const;
 
 public:
 	ShortString &append(const char *str);
