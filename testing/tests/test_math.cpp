@@ -61,9 +61,9 @@ TEST(Math, Matrix4x4) {
 
 	EXPECT_EQ(result.mat[0][3], 40);
 	Matrix4x4 a = Matrix4x4({1,2,3,4}, {4,3,2,1}, {1,2,3,4}, {7,6,5,4});
-	Matrix4x4 res = matrix_scale(a, {2,2,2,1});
+	Matrix4x4 res = matrix_scale(a, {2,2,2,2});
 	EXPECT_EQ(res.mat[0][3], 8);
 
 	res = matrix_perspective(10, 5, 0.01, 100);
-	log_matrix(res);
+	// log_matrix(res);
 }
