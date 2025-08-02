@@ -9,7 +9,7 @@ namespace kon {
 String &String::append(const char *str) {
 	size_t len = strlen(str);
 	resize(len + get_size());
-	strcat(get_buffer(), str);
+	strcat(m_buffer, str);
 	return *this;
 }
 
@@ -57,7 +57,7 @@ String String::substring(int a, int b) const {
 
 ShortString String::short_substring(int a, int b) const {
 	ShortString s;
-	memcpy(s.get_buffer(), m_buffer+a, b-a);
+	memcpy(m_buffer, m_buffer+a, b-a);
 	return s;
 }
 
@@ -66,7 +66,7 @@ ShortString::ShortString(const char *string) {
 }
 
 ShortString &ShortString::append(const char *str) {
-	strcat(get_buffer(), str);
+	strcat(m_buffer, str);
 	return *this;
 }
 

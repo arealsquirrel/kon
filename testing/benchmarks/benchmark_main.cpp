@@ -2,6 +2,7 @@
 #include "kon/container/hashmap.hpp"
 #include "kon/container/set.hpp"
 #include "kon/container/string.hpp"
+#include "kon/core/variant.hpp"
 #include "kon/debug/log.hpp"
 #include <benchmark/benchmark.h>
 #include <cstdlib>
@@ -180,13 +181,16 @@ static void BENCHMARK_stdhashmap(benchmark::State &state) {
 	}
 }
 
-static void BENCHMARK_game(benchmark::State &state) {
-    for (auto _ : state) {
-        for (int i = 1; i <= 100; i++) {
-			std::string s("hello");
-        }
-    }
-}
+struct Foo {
+	int x;
+	float y;
+};
+
+struct FieldData {
+	ShortString name;
+	VariantType type;
+	u32 offset;
+};
 
 BENCHMARK(BENCHMARK_setLookup);
 BENCHMARK(BENCHMARK_stdSetLookup);
@@ -196,5 +200,4 @@ BENCHMARK(BENCHMARK_hashmap);
 BENCHMARK(BENCHMARK_stdhashmap);
 BENCHMARK(BENCHMARK_mallocAllocator);
 BENCHMARK(BENCHMARK_freeListAllocator);
-BENCHMARK(BENCHMARK_game);
 

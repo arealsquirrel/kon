@@ -137,6 +137,12 @@ public:
 		}
 	}
 
+	void for_each(const ForEachFunction<T> func) const {
+		for(u32 i = 0; i < m_count; i++) {
+			func(m_buffer[i], i);
+		}
+	}
+
 private:
 	void move_elements(size_t dest, size_t source, size_t num) {
 		std::copy(m_buffer + source,

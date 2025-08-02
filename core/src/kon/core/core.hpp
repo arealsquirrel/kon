@@ -4,6 +4,7 @@
 #define KN_VERSION "1.0.0"
 
 #define KN_MEM_POINTER(var) reinterpret_cast<char*>(var)
+#define KN_CAST_MEM(var, type) reinterpret_cast<type*>(var)
 
 #define KN_BIT(x) 1 << x
 

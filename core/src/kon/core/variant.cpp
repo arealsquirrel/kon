@@ -66,7 +66,7 @@ template<>
 String &Variant::get() { return s; }
 
 template<>
-void Variant::set(const String &t) { s = t; }
+void Variant::set(const String &t) { s = t.c_str(); }
 
 template<>
 VariantType type_to_variant_type<String>() { return VariantType_String; }

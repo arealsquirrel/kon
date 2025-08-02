@@ -49,6 +49,20 @@ void swap_pair(Pair<First, Second> &a, Pair<First, Second> &b) {
 	// std::swap(a.second, b.second);
 }
 
+template<typename T>
+class UnCopyable {
+public:
+	UnCopyable(const T &t)
+		: value(t) {}
+	~UnCopyable() = default;
+	UnCopyable(const UnCopyable &) = delete;
+
+	T &operator ->() const { return value; }
+
+public:
+	T value;
+};
+
 }
 
 #endif
