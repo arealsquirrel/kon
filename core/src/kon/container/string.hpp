@@ -3,6 +3,7 @@
 
 #include "kon/core/allocator.hpp"
 #include "kon/core/assert.hpp"
+#include "kon/core/util.hpp"
 #include <cstring>
 #include <kon/core/core.hpp>
 #include <utility>
@@ -101,16 +102,17 @@ private:
 	Allocator *m_allocator;
 };
 
+/*
+ * now it is constexpr for the most part
+ */
 class ShortString {
 public:
 	ShortString() = default;
-	ShortString(const char *string);
+	constexpr ShortString(const char *string) { *this = string; }
 	ShortString(const ShortString &string) = default;
 	~ShortString() = default;
 
-	void operator =(const char *str) {
-		u32 s = strlen(str);
-		KN_ASSERT(s < 256, "ShortString is larger than 256");
+	constexpr void operator =(const char *str) {
 		strcpy(m_buffer, str);
 	}
 
@@ -144,7 +146,7 @@ public:
 	ShortString &append(const char *str);
 
 private:
-	char m_buffer[256];
+	char m_buffer[256] {};
 };
 
 }

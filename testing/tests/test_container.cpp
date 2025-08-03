@@ -74,10 +74,7 @@ TEST(Container, String) {
 }
 
 TEST(Container, Array) {
-	MemoryBlock block(1000);
-	Allocator all(&block);
-
-	Array<ShortString, 5> arr(&all);
+	Array<ShortString, 5> arr;
 	arr[0] = ShortString("zero");
 	arr[1] = ShortString("one");
 	arr[2] = ShortString("two");

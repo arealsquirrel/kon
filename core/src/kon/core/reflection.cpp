@@ -1,10 +1,36 @@
 
 #include "reflection.hpp"
+#include "kon/container/array.hpp"
+#include "kon/core/allocator.hpp"
 #include "kon/core/util.hpp"
 #include "kon/core/variant.hpp"
+#include <cstddef>
 
 namespace kon {
 
+Allocator Reflection::s_allocator(nullptr);
+
+template<>
+ReflectField Reflection::reflect_field_type<int>(ShortString fieldName, u32 offset) {
+	return ReflectField{
+		fieldName,
+		offset,
+		ReflectedType_int,
+		nullptr
+	};
+}
+
+template<>
+ReflectField Reflection::reflect_field_type<float>(ShortString fieldName, u32 offset) {
+	return ReflectField{
+		fieldName,
+		offset,
+		ReflectedType_float,
+		nullptr
+	};
+}
+
+/*
 ReflectType::ReflectType(ShortString name, std::initializer_list<Pair<ReflectField, u32>> fields)
 	: m_fields(&Reflection::get().m_allocator, fields.size()), m_name(name) {
 	
@@ -17,9 +43,9 @@ ReflectType::~ReflectType() = default;
 
 void ReflectType::for_each_field(std::function<void(const ReflectField &field)> f) const {
 	for(u32 i = 0; i < m_fields.get_size(); i++) {
-		auto &pair = m_fields[i];
+		auto &pair = m_fieads[i];
 		f(pair.first);
-	}
+	} w
 }
 
 Reflection::Reflection() 
@@ -92,6 +118,7 @@ ReflectField Reflection::create_field<ShortString>(ShortString name) {
 	field.type = VariantType_ShortString;
 	return field;
 }
+*/
 
 }
 

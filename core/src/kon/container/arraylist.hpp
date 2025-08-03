@@ -2,6 +2,7 @@
 #define KN_ARRAYLIST_HPP
 
 #include "kon/debug/log.hpp"
+#include <initializer_list>
 #include <kon/core/core.hpp>
 #include <kon/core/util.hpp>
 #include <kon/core/allocator.hpp>
@@ -15,6 +16,15 @@ public:
 		: m_allocator(allocator) {
 		
 		m_size = 0;
+	}
+
+	ArrayList(Allocator *allocator, std::initializer_list<T> list)
+		: m_allocator(allocator) {
+		
+		resize(list.size());
+
+		for(const T &t : list)
+			add(t);
 	}
 
 	ArrayList(Allocator *allocator, u32 size)

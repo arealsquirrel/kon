@@ -1,115 +1,124 @@
 #ifndef KN_REFLECTION_HPP
 #define KN_REFLECTION_HPP
 
+#include "kon/container/array.hpp"
 #include "kon/container/arraylist.hpp"
 #include "kon/container/string.hpp"
 #include "kon/core/allocator.hpp"
 #include "kon/core/util.hpp"
-#include "kon/core/variant.hpp"
 #include <functional>
-#include <initializer_list>
 #include <kon/core/core.hpp>
 
 namespace kon {
 
-class ReflectType;
-
 /*
- * represents a field. 
- * A field details a variant or a refrance to
- * ReflectType that can be used to store other reflected types
+ * enum for implied reflected types.
  */
+enum ReflectedType {
+	ReflectedType_Null = 0,
+	ReflectedType_ReflectClass,
+	ReflectedType_int,
+	ReflectedType_float,
+	ReflectedType_void
+};
+
+class ReflectClass;
+
 struct ReflectField {
 	ShortString name;
-	bool isVariant;
+	u32 offset;
+	ReflectedType type;
+	const ReflectClass* m_type;
+};
 
-	union {
-		VariantType type;
-		const ReflectType *next;
-	};
+struct ReflectFunction {
+	ShortString name;
+};
+
+class ReflectField;
+
+struct ReflectClass {
+	ShortString m_name;
+	UnCopyable<ArrayList<ReflectField>> m_fields;
+	UnCopyable<ArrayList<ReflectFunction>> m_funtions;
 };
 
 /*
- * represents a type that can be reflected
- * a type is composed of fields and functions
+ * defines static functions for reflecting types, and an
+ * instance implementation for accessing arbitrary types by field name
  */
-class ReflectType {
+class Reflection {
 public:
-	ReflectType(ShortString name, std::initializer_list<Pair<ReflectField, u32>> fields);
-	~ReflectType();
+	~Reflection() = default;
 
-public:
-	void for_each_field(std::function<void(const ReflectField &field)> f) const;
+	const ReflectClass *get_class() const { return m_reflectedClass; }
+
+	ReflectField get_field(ShortString name) {
+		for(u32 i = 0; i < m_reflectedClass->m_fields->get_count(); i++) {
+			if(m_reflectedClass->m_fields->get(i).name.hash() == name.hash()) {
+				return m_reflectedClass->m_fields->get(i);
+			}
+		}
+
+		return ReflectField{"_nulltype", 0, ReflectedType_Null, nullptr};
+	}
 
 	template<typename T>
-	void reflect_fields(T &t,
-			std::function<void(const ReflectField &field, char *mem)> f) const {
-		
-		for(u32 i = 0; i < m_fields.get_size(); i++) {
-			auto &pair = m_fields[i];
-			f(pair.first, KN_MEM_POINTER(&t)+pair.second);
+	T &get_type(ShortString name) {
+		ReflectField field = get_field(name);
+		return *reinterpret_cast<T*>(m_classMem+field.offset);
+	}
+
+	void for_each_field(std::function<void(const ReflectField &field)> f) {
+		for(u32 i = 0; i < m_reflectedClass->m_fields->get_count(); i++) {
+			f(m_reflectedClass->m_fields->get(i));
 		}
 	}
 
-	ShortString get_type_name() const { return m_name; }
-
 private:
+	char *m_classMem;
+	const ReflectClass *m_reflectedClass;
 
-	/* if you copy this field, i will fucking kill you */
-	const ArrayList<Pair<ReflectField, u32>> &get_fields() const { return m_fields; }
-
-
-	/* holds a list of fields, and their offsets within their types */
-	ArrayList<Pair<ReflectField, u32>> m_fields;
-	ShortString m_name;
-};
-
-class Reflection {
 public:
-	static Reflection &get() {
-		static Reflection r;
+	// ------------ STATIC STUFF ------------ //
+	template<class T>
+	static ReflectField reflect_field_type(ShortString fieldName, u32 offset);
+
+	template<class T>
+	static const ReflectClass *reflect_class();
+
+	template<class T>
+	static Reflection reflect(T &t) {
+		Reflection r;
+		r.m_classMem = KN_MEM_POINTER(&t);
+		r.m_reflectedClass = reflect_class<T>();
 		return r;
 	}
 
-public:
-	const ReflectType *get_type(ShortString name);
-
-	template<typename T>
-	static const ReflectType *reflect_type();
-	
 private:
-	Reflection();
-	~Reflection();
-
-	/*
-	 * takes a template and a name, and creates a 
-	 * reflect field class
-	 */
-	template<typename T>
-	static ReflectField create_field(ShortString name);
-
-private:
-	MemoryBlock m_reflectionBlock;
-	Allocator m_allocator;
-
-	friend ReflectType;
+	static Allocator s_allocator;
 };
 
-#define KN_REF_FIELD(name) {Reflection::create_field<decltype(T::name)>(#name), offsetof(T, name)}
-
-#define KN_REFLECT(TypeName, ...) template<> \
-const ReflectType *Reflection::reflect_type<TypeName>() { \
-	using T = TypeName; \
-	static ReflectType type(#TypeName, __VA_ARGS__); \
-	return &type; \
+#define KN_REF_BEGIN_TYPES(...) ArrayList<ReflectField>(&s_allocator, {__VA_ARGS__})
+#define KN_REF_BEGIN_FUNCTIONS(...) ArrayList<ReflectFunction>(&s_allocator, {__VA_ARGS__}),
+#define KN_REF_TYPE(name) reflect_field_type<decltype(T::name)>(#name, offsetof(T, name))
+#define KN_REF_FUNCTION(function) ReflectFunction{#function}
+#define KN_REF_NO_FUNCTIONS KN_REF_BEGIN_FUNCTIONS() 
+#define KN_REFLECT(CLASS, ...) \
+template<> \
+const ReflectClass *Reflection::reflect_class<Foo>() { \
+	using T = Foo; \
+	static ReflectClass c{#CLASS, __VA_ARGS__}; \
+	return &c; \
 } \
 template<> \
-ReflectField Reflection::create_field<TypeName>(ShortString name) { \
-	ReflectField field; \
-	field.name = name; \
-	field.isVariant = false; \
-	field.next = Reflection::get().reflect_type<TypeName>(); \
-	return field; \
+ReflectField Reflection::reflect_field_type<Foo>(ShortString fieldName, u32 offset) { \
+	return ReflectField{ \
+		fieldName, \
+		offset, \
+		ReflectedType_ReflectClass, \
+		reflect_class<CLASS>() \
+	}; \
 }
 
 }

@@ -61,10 +61,6 @@ ShortString String::short_substring(int a, int b) const {
 	return s;
 }
 
-ShortString::ShortString(const char *string) {
-	*this = string;
-}
-
 ShortString &ShortString::append(const char *str) {
 	strcat(m_buffer, str);
 	return *this;

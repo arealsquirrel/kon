@@ -3,8 +3,14 @@
 
 #include <kon/core/core.hpp>
 #include <functional>
+#include <string>
 
 namespace kon {
+
+constexpr u32 constexpr_strlen(const char* s) {
+    return std::char_traits<char>::length(s);
+}
+
 
 template<typename T>
 using ForEachFunction = std::function<void(T &element, u32 index)>;
@@ -32,7 +38,7 @@ template<typename First, typename Second>
 struct Pair {
 public:
 	Pair() = default;
-	Pair(First _f, Second _s)
+	constexpr Pair(First _f, Second _s)
 		: first(_f), second(_s) {}
 	~Pair() = default;
 	Pair(const Pair &pair)
@@ -55,11 +61,13 @@ public:
 	UnCopyable(const T &t)
 		: value(t) {}
 	~UnCopyable() = default;
-	UnCopyable(const UnCopyable &) = delete;
+	UnCopyable(const UnCopyable&) = delete;
+	void operator =(const UnCopyable&) = delete;
 
-	T &operator ->() const { return value; }
+	const T *operator ->() const { return &value; }
+	const T *get() const { return &value; }
 
-public:
+private:
 	T value;
 };
 
