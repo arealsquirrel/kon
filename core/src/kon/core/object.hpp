@@ -27,7 +27,8 @@ public:
 
 public:
 	UUID get_instance_id() const { return m_instanceID; }
-	const Allocator *get_allocator() const { return m_allocator; }
+	Allocator *get_allocator() const { return m_allocator; }
+	Engine *get_engine() const { return m_engine; }
 
 	/*
 	 * T must inherit from object

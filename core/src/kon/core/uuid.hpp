@@ -14,6 +14,10 @@ public:
 	UUID(u64 id);
 	~UUID();
 
+	void operator =(const UUID &id) {
+		uuid = id.uuid;
+	}
+
 	operator u64() const { return uuid; }
 	
 	bool operator ==(const UUID &_uuid) { return (_uuid.uuid == uuid); }

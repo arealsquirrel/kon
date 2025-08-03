@@ -43,6 +43,9 @@ public:
 	void load_resource(ShortString name);
 	void load_resource_group(UUID group);
 
+	void unload_resource(ShortString name);
+	void unload_resource_group(UUID group);
+
 	Resource *get_resource(ShortString name);
 
 	template<class R>

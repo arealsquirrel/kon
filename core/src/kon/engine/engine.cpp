@@ -6,12 +6,12 @@
 #include "kon/core/object.hpp"
 #include "kon/debug/instrumentation.hpp"
 #include "kon/debug/log.hpp"
+#include "kon/resource/resource_cache.hpp"
 
 namespace kon {
 
 Engine::Engine(EngineCreateInfo info) 
-	: Object(this), EventListener(m_eventBus),
-	  // m_block(info.memoryBudget),
+	: Object(this),
 	  m_persistentMemory(info.persistentMemorySize),
 	  m_persistentMemoryAllocator(&m_persistentMemory),
 	  m_dynamicMemory(info.dynamicMemorySize),
@@ -22,10 +22,13 @@ Engine::Engine(EngineCreateInfo info)
 	  m_testAllocator(&m_persistentMemory),
 	  m_moduleArray(this, reinterpret_cast<Allocator*>(&m_persistentMemoryAllocator)),
 	  m_eventBus(&m_persistentMemoryAllocator),
-	  // m_window(this, {"Kon Engine", 500, 500}),
+	  m_window(this, {"Kon Engine", 500, 500}),
 	  m_resourceCache(&m_persistentMemoryAllocator, this) {
 
-	subscribe_event<EventEngineExit>();
+
+	m_eventBus.add_listener(
+			{ [&](Event&){ m_running = false; }, get_instance_id() },
+			EventEngineExit::get_static_uuid());
 }
 
 Engine::~Engine() = default;
@@ -47,20 +50,8 @@ bool Engine::update() {
 void Engine::clean() {
 	KN_INSTRUMENT_FUNCTION();
 
+	m_resourceCache.unload_resource_group(ResourceCache::groupIDAll);
 	m_moduleArray.clean_modules();
-	m_eventBus.remove_listener<EventEngineExit>(this);
-}
-
-void Engine::on_event(Event &event) {
-	KN_INSTRUMENT_FUNCTION();
-
-	KN_CORE_ERROR("whaat");
-
-	if(event.get_uuid() == EventEngineExit::get_static_uuid()) {
-		m_running = false;
-	}
-
-	KN_CORE_ERROR("whaat");
 }
 
 void Engine::mem_dump() {

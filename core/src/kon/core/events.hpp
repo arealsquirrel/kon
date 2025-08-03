@@ -5,7 +5,9 @@
 #include "kon/container/arraylist.hpp"
 #include "kon/container/set.hpp"
 #include "kon/core/allocator.hpp"
+#include "kon/core/object.hpp"
 #include "kon/core/uuid.hpp"
+#include <functional>
 #include <kon/core/core.hpp>
 
 namespace kon {
@@ -25,27 +27,12 @@ public:
 
 class EventBus;
 
-class EventListener {
-public:
-	EventListener(EventBus &bus);
-	virtual ~EventListener();
+using EventFunction = std::function<void(Event &event)>;
 
-public:
-	template<class E>
-	void subscribe_event() {
-		subscribe_event(E::get_static_uuid());
-	}
-
-	void subscribe_event(UUID eventID);
-
-	virtual void on_event(Event &event) = 0;
-
-private:
-	EventBus &m_bus;
-	u32 m_subscribedEvents {0};
-	UUID m_events[32];
+struct EventCallback {
+	EventFunction m_callback;
+	UUID instanceID;
 };
-
 
 class EventBus {
 public:
@@ -53,36 +40,57 @@ public:
 	~EventBus();
 
 public:
+	void add_listener(EventCallback function, UUID eventID);
+
 	void register_event(UUID eventID);
-	void add_listener(EventListener *listener, UUID eventID);
-	void remove_listener(EventListener *listeners, UUID eventID);
-
-	template<class E>
-	void add_listener(EventListener *listener) {
-		add_listener(listener, E::get_static_uuid());
-	}
-
-	template<class E>
-	void remove_listener(EventListener *listener) {
-		remove_listener(listener, E::get_static_uuid());
-	}
 
 	template<class E, typename ...Args>
 	void emit_event(Args &&...args) {
 		E event(std::forward<Args>(args)...);
 
-		ArrayList<EventListener*> arr = m_listeners[m_eventClassIDToIndex.find(
+		ArrayList<EventCallback> arr = m_listeners[m_eventClassIDToIndex.find(
 				E::get_static_uuid()).second];
-		arr.for_each([&](EventListener *l, u32){
-			l->on_event(event);
+
+		arr.for_each([&](EventCallback &l, u32){
+			l.m_callback(event);
 		});
 	}
 
+	void destroy_callback(UUID eventID, UUID instanceID);
+
 private:
-	ArrayList<ArrayList<EventListener*>> m_listeners;
+	ArrayList<ArrayList<EventCallback>> m_listeners;
 	Set<UUID, u32> m_eventClassIDToIndex;
 
 	Allocator *m_allocator;
+};
+
+class EventListener {
+public:
+	EventListener(Object *obj);
+	virtual ~EventListener();
+
+public:
+	template<class E>
+	void subscribe_event(std::function<void(E &event)> eventFunction) {
+		m_bus.add_listener(
+				EventCallback { 
+				// Event callback function
+				[eventFunction](Event &event){ 
+					eventFunction(dynamic_cast<E&>(event)); 
+				}, 
+
+				// instance ID
+				m_attached->get_instance_id()
+			}, E::get_static_uuid());
+
+		m_attachedEvents.add(E::get_static_uuid());
+	}
+
+private:
+	Object *m_attached;
+	ArrayList<UUID> m_attachedEvents;
+	EventBus &m_bus;
 };
 
 

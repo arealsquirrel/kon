@@ -19,7 +19,7 @@ u32 frameMemorySize;
 
 };
 
-class Engine : public Object, public EventListener {
+class Engine : public Object {
 KN_OBJECT(Engine, Object)
 
 public:
@@ -39,9 +39,6 @@ public:
 	void init();
 	bool update();
 	void clean();
-	
-public:
-	void on_event(Event &event) override;
 
 private:
 
@@ -56,7 +53,7 @@ private:
 	
 	ModuleArray m_moduleArray;
 	EventBus m_eventBus;
-	// Window m_window;
+	Window m_window;
 	ResourceCache m_resourceCache;
 
 	bool m_running {true};

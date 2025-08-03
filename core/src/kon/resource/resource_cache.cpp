@@ -130,5 +130,19 @@ void ResourceCache::add_resource_pack(ShortString name) {
 	});
 }
 
+void ResourceCache::unload_resource(ShortString name) {
+	Resource *r = get_resource(name);
+	r->unload_resource();
+}
+
+void ResourceCache::unload_resource_group(UUID group) {
+	m_stringToResource.for_each([&](auto &p){
+		if(p.second->get_group_uuid() == group || group == groupIDAll) {
+			KN_CORE_TRACE("unloading resource {}", p.second->get_name().c_str());
+			p.second->unload_resource();
+		}
+	});
+}
+
 }
 

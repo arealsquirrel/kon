@@ -11,7 +11,6 @@ struct Foo {
 	float y;
 };
 
-
 KN_REFLECT(Foo, 
 KN_REF_BEGIN_TYPES(
 	KN_REF_TYPE(x),
@@ -24,5 +23,6 @@ TEST(Reflection, Variant) {
 	Foo foo {2, 1.2};
 
 	EXPECT_EQ(Reflection::reflect(foo).get_type<int>("x"), 2);
+	EXPECT_NEAR(Reflection::reflect(foo).get_type<float>("y"), 1.2, 0.1);
 }
 
