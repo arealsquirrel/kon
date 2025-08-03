@@ -78,6 +78,7 @@ public:
 	Directory get_path() const { return m_path; }
 	ShortString get_name() const { return m_name; }
 	UUID get_group_uuid() const { return m_groupID; }
+	ResourceLoadState get_load_state() const { return m_loadState; }
 
 public:
 	/*

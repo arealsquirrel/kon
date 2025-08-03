@@ -8,6 +8,7 @@
 #include "kon/core/directory.hpp"
 #include "kon/core/object.hpp"
 #include "kon/core/uuid.hpp"
+#include "kon/debug/log.hpp"
 #include "kon/resource/resource.hpp"
 #include <kon/core/core.hpp>
 
@@ -28,7 +29,11 @@ public:
 
 public:
 	template<class R>
-	R *add_resource(Directory path, ShortString name, UUID gid=groupIDAll) {
+	inline R *add_resource(Directory path, ShortString name, UUID gid=groupIDAll) {
+		if(path.get_stat().valid == false) {
+			KN_CORE_ERROR("path is not valid {}", path.c_str());
+			return nullptr;
+		}
 		R *r = m_allocator->allocate<R>(1, m_allocator, m_engine, path, name, gid);
 		m_stringToResource.add({name, dynamic_cast<Resource*>(r)});
 		return r;

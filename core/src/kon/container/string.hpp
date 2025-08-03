@@ -118,7 +118,7 @@ public:
 
 	ShortString substring(int a, int b) const;
 
-	u32 get_size() const { return 256; }
+	u32 get_size() const { return strlen(m_buffer); }
 	const char *c_str() const { return m_buffer; }
 
 	ShortString short_substring(int a, int b) const;

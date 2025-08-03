@@ -27,6 +27,7 @@ void ResourceImage::load_resource(ResourceLoadError *error) {
 }
 
 void ResourceImage::load_metadata(ResourceLoadError *error) {
+	
 	int n; // ??????
 	u32 ok = stbi_info(m_path.get_string().c_str(),
 			&m_metadata.size.x, &m_metadata.size.y,
@@ -34,9 +35,11 @@ void ResourceImage::load_metadata(ResourceLoadError *error) {
 
 	if(ok == 0) {
 		*error = ResourceLoadError_APIError;
-		KN_CORE_ERROR("ResourceImage {}\n stbi_image error {}", stbi_failure_reason());
+		KN_CORE_ERROR("ResourceImage {}", m_path.c_str());
+		return;
 	}
 
+	/*
 	// make some default metadata
 	m_metadata.image = m_path.get_string().c_str();
 	m_metadata.frames.add({
@@ -46,6 +49,7 @@ void ResourceImage::load_metadata(ResourceLoadError *error) {
 		Rect{0, 0, m_metadata.size.x, m_metadata.size.y},
 		0
 	});
+	*/
 
 	Resource::load_metadata(error);
 }

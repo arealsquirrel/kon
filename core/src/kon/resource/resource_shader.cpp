@@ -28,7 +28,10 @@ void ResourceShader::load_metadata(ResourceLoadError *error) {
 }
 
 void ResourceShader::unload_resource() {
-	m_allocator->free_mem(m_shader, m_size);
+	if(m_loadState == ResourceLoadState_FullyLoaded) {
+		m_allocator->free_mem(m_shader, m_size);
+	}
+
 	Resource::unload_resource();
 }
 

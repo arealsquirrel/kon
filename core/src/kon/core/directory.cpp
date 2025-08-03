@@ -17,6 +17,7 @@ Directory::Directory(const Directory &directory)
 Directory::~Directory() = default;
 
 ShortString Directory::get_file_name() const {
+	if(m_path.compare("") == 0) return "";
 	int i = m_path.get_size();
 	for (; i >= 0; i--) {
 		if(m_path.char_at(i) == '/') break;

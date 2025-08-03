@@ -22,7 +22,7 @@ Engine::Engine(EngineCreateInfo info)
 	  m_testAllocator(&m_persistentMemory),
 	  m_moduleArray(this, reinterpret_cast<Allocator*>(&m_persistentMemoryAllocator)),
 	  m_eventBus(&m_persistentMemoryAllocator),
-	  m_window(this, {"Kon Engine", 500, 500}),
+	  // m_window(this, {"Kon Engine", 500, 500}),
 	  m_resourceCache(&m_persistentMemoryAllocator, this) {
 
 
