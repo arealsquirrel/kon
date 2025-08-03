@@ -12,6 +12,8 @@ include(cmake/get_packages.cmake)
 
 project(kon LANGUAGES CXX)
 
+find_package(Vulkan REQUIRED)
+
 enable_testing()
 
 add_subdirectory(core)

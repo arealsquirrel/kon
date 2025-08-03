@@ -42,15 +42,15 @@ TEST(Reflection, Variant) {
 	[](const auto &field, char *mem){
 		switch (field.type) {
 		case VariantType_double: 
-			KN_CORE_INFO("double {}", *KN_CAST_MEM(mem, double));
+			EXPECT_EQ(2.7, *KN_CAST_MEM(mem, double));
 			break;
 
 		case VariantType_Color:  
-			KN_CORE_INFO("color {}",  KN_CAST_MEM(mem, Color)->rgba[0]);
+			EXPECT_EQ(21,  KN_CAST_MEM(mem, Color)->rgba[0]);
 			break;
 
 		case VariantType_ShortString:  
-			KN_CORE_INFO("short string {}",  KN_CAST_MEM(mem, ShortString)->c_str());
+			EXPECT_EQ("hello!",  KN_CAST_MEM(mem, ShortString)->c_str());
 			break;
 
 		default:

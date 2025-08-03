@@ -1,9 +1,7 @@
 #ifndef KN_RESOURCE_CACHE_HPP
 #define KN_RESOURCE_CACHE_HPP
 
-#include "kon/container/arraylist.hpp"
 #include "kon/container/hashmap.hpp"
-#include "kon/container/set.hpp"
 #include <kon/math/vector2.hpp>
 #include "kon/container/string.hpp"
 #include "kon/core/allocator.hpp"

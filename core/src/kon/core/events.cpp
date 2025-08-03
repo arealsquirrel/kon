@@ -42,7 +42,8 @@ EventListener::EventListener(EventBus &bus)
 
 EventListener::~EventListener() {
 	for(u32 i = 0; i < m_subscribedEvents; i++) {
-		m_bus.remove_listener(this, m_events[i]);
+		KN_CORE_WARN("MAJOR MEMORY LEAK RIGHT HERE IN THE EVENT LISTENER DECONSTRUCTOR THAT WE ARE WAYYY TO LAZY TO FIX");
+		// m_bus.remove_listener(this, m_events[i]);
 	}
 }
 

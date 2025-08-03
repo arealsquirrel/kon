@@ -85,6 +85,16 @@ private:
 	Allocator *m_allocator;
 };
 
+
+// ----------- ENGINE EVENTS ----------- //
+struct EventEngineExit : public Event {
+KN_EVENT
+
+public:
+	EventEngineExit() = default;
+	~EventEngineExit() = default;
+};
+
 }
 
 #endif

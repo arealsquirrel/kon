@@ -16,3 +16,9 @@ if(KN_BUILD_BENCHMARKS)
 	CPMAddPackage("gh:google/benchmark@1.9.4")
 endif()
 
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_DOCS OFF)
+CPMAddPackage("gh:glfw/glfw#7b6aead")
+
+

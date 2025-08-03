@@ -1,44 +1,40 @@
 
-#include "kon/core/directory.hpp"
+#include "kon/core/events.hpp"
 #include "kon/engine/engine.hpp"
 #include "kon/resource/resource.hpp"
-#include "kon/resource/resource_cache.hpp"
-#include "kon/resource/resource_image.hpp"
-#include "kon/resource/resource_pack.hpp"
-#include "kon/resource/resource_shader.hpp"
 #include <kon/debug/log.hpp>
+#include <kon/debug/instrumentation.hpp>
 
 using namespace kon;
 
 int main() {
+	KN_INSTRUMENT_NEW_FILE("logs/startup.json");
+
 	EngineCreateInfo info {
 		40000000,  // 40MB
 		200000000, // 200MB
 		16000000   // 16MB
 	};
-	Engine engine(info);
+	
+	{
+		Engine engine(info);
+		engine.init();
 
-	ResourceCache cache(engine.get_allocator_persistent(), &engine);
-	engine.mem_dump();
-	ResourcePack *pack = cache.add_resource<ResourcePack>(Directory(
-				"../core/resources/kon_primitaves/",
-				engine.get_allocator_persistent()),
-			"primitives");
-	ResourceLoadError error {kon::ResourceLoadError_None};
-	cache.load_metadata("primitives");
-	cache.add_resource_pack("primitives");
+		KN_INSTRUMENT_CLOSE_FILE();
 
-	engine.mem_dump();
+		KN_INSTRUMENT_NEW_FILE("logs/update.json");
 
-	cache.load_metadata_group(pack->get_instance_id());
-	cache.load_resource_group(pack->get_instance_id());
+		while(engine.update()) {
+			engine.get_event_bus().emit_event<EventEngineExit>();
+		}
 
-	engine.mem_dump();
+		KN_INSTRUMENT_CLOSE_FILE();
 
-	ResourceShader *shader = cache.get_resource<ResourceShader>("triangle.frag.spv");
-	KN_CORE_TRACE("shader {}", shader->get_size());
+		KN_INSTRUMENT_NEW_FILE("logs/close.json")
 
-	ResourceImage *image = cache.get_resource<ResourceImage>("Prototype_Grid_Green_09-256x256.png");
-	KN_CORE_TRACE("image {} {}", image->get_metadata().size.x, image->get_metadata().size.y);
+		engine.clean();
+	} // get the engine out of scope so we can log its shutdown
+
+	KN_INSTRUMENT_CLOSE_FILE();
 }
 

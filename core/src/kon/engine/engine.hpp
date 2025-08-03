@@ -4,8 +4,10 @@
 #include "kon/core/allocator.hpp"
 #include "kon/core/events.hpp"
 #include "kon/core/object.hpp"
+#include "kon/core/window.hpp"
 #include "kon/engine/module.hpp"
 #include <kon/core/core.hpp>
+#include <kon/resource/resource_cache.hpp>
 
 namespace kon {
 
@@ -17,7 +19,7 @@ u32 frameMemorySize;
 
 };
 
-class Engine : public Object {
+class Engine : public Object, public EventListener {
 KN_OBJECT(Engine, Object)
 
 public:
@@ -34,23 +36,30 @@ public:
 
 	void mem_dump();
 
+	void init();
+	bool update();
+	void clean();
+	
+public:
+	void on_event(Event &event) override;
+
 private:
 
 	/* a lot of memory stuff */
 	MemoryBlock m_persistentMemory;
 	FreeListAllocator m_persistentMemoryAllocator;
-
 	MemoryBlock m_dynamicMemory;
 	FreeListAllocator m_dynamicMemoryAllocator;
-
 	MemoryBlock m_frameMemory;
 	StackAllocator m_frameAllocator;
-
 	Allocator m_testAllocator;
 	
 	ModuleArray m_moduleArray;
-
 	EventBus m_eventBus;
+	// Window m_window;
+	ResourceCache m_resourceCache;
+
+	bool m_running {true};
 };
 
 }

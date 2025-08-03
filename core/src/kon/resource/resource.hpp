@@ -6,13 +6,13 @@
 #include "kon/core/directory.hpp"
 #include "kon/core/object.hpp"
 #include "kon/core/uuid.hpp"
-#include "kon/engine/engine.hpp"
 #include <kon/core/core.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
 namespace kon {
 
+class Engine;
 
 enum ResourceLoadError {
 	ResourceLoadError_None = 0,
