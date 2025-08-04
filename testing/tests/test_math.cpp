@@ -12,6 +12,9 @@
 #include <gtest/gtest.h>
 #include <kon/core/core.hpp>
 
+#include <kon/math/matrix_operations.hpp>
+#include <kon/math/vector_operations.hpp>
+
 using namespace kon;
 
 // Demonstrate some basic assertions.
@@ -45,7 +48,7 @@ TEST(Math, VectorCross) {
 
 TEST(Math, Matrix2x2) {
 	Vector2 v{2,1};
-	Matrix2x2 mat({1,2}, {3,4});
+	Matrix2x2 mat{{{1,2}, {3,4}}};
 
 	EXPECT_EQ(mat.mat[1][0], 3);
 
@@ -54,12 +57,12 @@ TEST(Math, Matrix2x2) {
 	EXPECT_EQ(mat.mat[1][1], 1);
 	EXPECT_EQ(mat.mat[0][1], 0);
 
-	Matrix2x2 result = matrix_multiply(Matrix2x2({1,3}, {3,2}), Matrix2x2({4,5}, {6,5}));
+	Matrix2x2 result = matrix_multiply(Matrix2x2{{{1,3}, {3,2}}}, Matrix2x2{{{4,5}, {6,5}}});
 	EXPECT_EQ(result.mat[1][1], 25);
 }
 
 TEST(Math, Matrix3x3) {
-	Matrix3x3 mat({1,2,0}, {}, {1,4,2});
+	Matrix3x3 mat{{{1,2,0}, {}, {1,4,2}}};
 
 	EXPECT_EQ(mat.mat[2][1], 4);
 	mat = matrix_identity<Matrix3x3>();
@@ -67,13 +70,13 @@ TEST(Math, Matrix3x3) {
 	EXPECT_EQ(mat.mat[2][2], 1);
 	EXPECT_EQ(mat.mat[2][0], 0);
 
-	Matrix3x3 result = matrix_multiply(Matrix3x3({1,2,3}, {3,2,1}, {1,2,3}),
-									   Matrix3x3({4,5,6}, {6,5,4}, {4,6,5}));
+	Matrix3x3 result = matrix_multiply(Matrix3x3{{{1,2,3}, {3,2,1}, {1,2,3}}},
+									   Matrix3x3{{{4,5,6}, {6,5,4}, {4,6,5}}});
 	EXPECT_EQ(result.mat[1][1], 31);
 }
 
 TEST(Math, Matrix4x4) {
-	Matrix4x4 mat({1,2,0,2}, {}, {1,4,2,1}, {9,2,1,0});
+	Matrix4x4 mat{{{1,2,0,2}, {}, {1,4,2,1}, {9,2,1,0}}};
 
 	EXPECT_EQ(mat.mat[2][1], 4);
 	mat = matrix_identity<Matrix4x4>();
@@ -82,19 +85,19 @@ TEST(Math, Matrix4x4) {
 	EXPECT_EQ(mat.mat[2][0], 0);
 
 
-	Matrix4x4 result = matrix_multiply(Matrix4x4({1,2,3,4}, {4,3,2,1}, {1,2,3,4}, {7,6,5,4}),
-					   					  Matrix4x4({4,5,6,7}, {7,6,5,4}, {4,6,5,7}, {4,3,2,1}));
+	Matrix4x4 result = matrix_multiply(Matrix4x4{{{1,2,3,4}, {4,3,2,1}, {1,2,3,4}, {7,6,5,4}}},
+					   					  Matrix4x4{{{4,5,6,7}, {7,6,5,4}, {4,6,5,7}, {4,3,2,1}}});
 
 	EXPECT_EQ(result.mat[0][3], 40);
 	Matrix4x4 res = trfm_scale({2,2,2});
 	// EXPECT_EQ(res.mat[0][3], 8);
 
-	res = trfm_perspective(0, 0, 10, 5, 0.01, 100);
-
-
 	Vector3 point{1,5,3};
 	Vector4 model = matrix_multiply_vec(trfm_translation(Vector3{3,2,2}), {point.x, point.y, point.z, 1});
 	model = matrix_multiply_vec(trfm_scale(Vector3{2,1,1}), model);
+	model = matrix_multiply_vec(trfm_rotate_z(3.14159), model);
+	model = matrix_multiply_vec(trfm_orthographic(0.01, 100.0f, -10.0f, 10.0f, 10.0f, -10.0f), model);
 
 	KN_TRACE("{} {} {} {}", model.x, model.y, model.z, model.w);
 }
+

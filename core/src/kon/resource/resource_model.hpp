@@ -6,9 +6,7 @@
 #include "kon/engine/engine.hpp"
 #include "kon/resource/resource.hpp"
 #include <kon/core/core.hpp>
-#include <kon/math/vector.hpp>
-#include <kon/math/vector3.hpp>
-#include <kon/math/vector2.hpp>
+#include <kon/math/vector_operations.hpp>
 
 namespace kon {
 

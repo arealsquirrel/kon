@@ -1,16 +1,44 @@
+#ifndef KN_MATRIX_OPERATIONS_HPP
+#define KN_MATRIX_OPERATIONS_HPP
 
-#include "matrix.hpp"
+#include "kon/math/matrix.hpp"
 #include "kon/math/matrix2x2.hpp"
 #include "kon/math/matrix3x3.hpp"
 #include "kon/math/matrix4x4.hpp"
-#include "kon/math/vector.hpp"
-#include "kon/math/vector4.hpp"
-#include <cmath>
 
 namespace kon {
 
+template<class M>
+M matrix_multiply(const M &a, const M &b);
+
+// template<u8 xSize, u8 ySize, typename Type>
+inline Vector<4,float> matrix_multiply_vec(const Matrix<4,4,float> &a, const Vector<4, float> &b) {
+	Vector<4, float> result;
+
+    for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+            result.vec[i] += a.mat[i][j] * b.vec[j];
+        }
+    }
+
+	return result;
+}
+
+
+/*
+ * returns the identity matrix of matrix type M
+ */
+template<class M>
+M matrix_identity();
+
+/*
+ * calcalates the gausian norm of a matrix
+ */
+template<class M>
+inline float matrix_norm(const M &matrix);
+
 template<>
-Matrix2x2 matrix_multiply(const Matrix2x2 &a, const Matrix2x2 &b) {
+inline Matrix2x2 matrix_multiply(const Matrix2x2 &a, const Matrix2x2 &b) {
 	Matrix2x2 result;
 	result.mat[0][0] = a.mat[0][0]*b.mat[0][0] + a.mat[0][1]*b.mat[1][0];
 	result.mat[0][1] = a.mat[0][0]*b.mat[0][1] + a.mat[0][1]*b.mat[1][1];
@@ -21,7 +49,7 @@ Matrix2x2 matrix_multiply(const Matrix2x2 &a, const Matrix2x2 &b) {
 }
 
 template<>
-Matrix3x3 matrix_multiply(const Matrix3x3 &a, const Matrix3x3 &b) {
+inline Matrix3x3 matrix_multiply(const Matrix3x3 &a, const Matrix3x3 &b) {
 	Matrix3x3 result;
 	result.mat[0][0] = a.mat[0][0]*b.mat[0][0] + a.mat[0][1]*b.mat[1][0] + a.mat[0][2]*b.mat[2][0];
 	result.mat[0][1] = a.mat[0][0]*b.mat[0][1] + a.mat[0][1]*b.mat[1][1] + a.mat[0][2]*b.mat[2][1];
@@ -38,7 +66,7 @@ Matrix3x3 matrix_multiply(const Matrix3x3 &a, const Matrix3x3 &b) {
 }
 
 template<>
-Matrix4x4 matrix_multiply(const Matrix4x4 &a, const Matrix4x4 &b) {
+inline Matrix4x4 matrix_multiply(const Matrix4x4 &a, const Matrix4x4 &b) {
 	Matrix4x4 result;
 
 	for (int i = 0; i < 4; i++) {
@@ -53,37 +81,27 @@ Matrix4x4 matrix_multiply(const Matrix4x4 &a, const Matrix4x4 &b) {
 	return result;
 }
 
-Vector<4,float> matrix_multiply_vec(const Matrix<4,4,float> &a, const Vector<4, float> &b) {
-	Vector<4, float> result;
 
-    for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-            result.vec[i] += a.mat[i][j] * b.vec[j];
-        }
-    }
-
-	return result;
-}
 
 // ---------------- IDENTITY ---------------- //
 template<>
-Matrix2x2 matrix_identity() {
-	return {{1,0}, {0,1}};
+inline Matrix2x2 matrix_identity() {
+	return {{{1,0}, {0,1}}};
 }
 
 template<>
-Matrix3x3 matrix_identity() {
-	return {{1,0,0}, {0,1,0}, {0,0,1}};
+inline Matrix3x3 matrix_identity() {
+	return {{{1,0,0}, {0,1,0}, {0,0,1}}};
 }
 
 template<>
-Matrix4x4 matrix_identity() {
-	return {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}};
+inline Matrix4x4 matrix_identity() {
+	return {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}}};
 }
 
 // ---------------- NORM ---------------- //
 template<>
-float matrix_norm(const Matrix2x2 &matrix) {
+inline float matrix_norm(const Matrix2x2 &matrix) {
 	float sq = 0;
 	for (int i = 0; i < 2; i++)
 		for (int j = 0; j < 2; j++)
@@ -93,7 +111,7 @@ float matrix_norm(const Matrix2x2 &matrix) {
 }
 
 template<>
-float matrix_norm(const Matrix3x3 &matrix) {
+inline float matrix_norm(const Matrix3x3 &matrix) {
 	float sq = 0;
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
@@ -103,7 +121,7 @@ float matrix_norm(const Matrix3x3 &matrix) {
 }
 
 template<>
-float matrix_norm(const Matrix4x4 &matrix) {
+inline float matrix_norm(const Matrix4x4 &matrix) {
 	float sq = 0;
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
@@ -114,3 +132,4 @@ float matrix_norm(const Matrix4x4 &matrix) {
 
 }
 
+#endif
