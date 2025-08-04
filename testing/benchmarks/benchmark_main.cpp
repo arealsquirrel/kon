@@ -1,20 +1,12 @@
 
-#include "kon/container/hashmap.hpp"
-#include "kon/container/set.hpp"
-#include "kon/container/string.hpp"
-#include "kon/core/variant.hpp"
 #include "kon/debug/log.hpp"
 #include "kon/math/transformations.hpp"
 #include "kon/math/vector3.hpp"
 #include "kon/math/vector4.hpp"
 #include <benchmark/benchmark.h>
 #include <cstdlib>
-#include <iostream>
-#include <map>
-#include <string>
 #include <kon/core/allocator.hpp>
 #include <kon/math/matrix_operations.hpp>
-#include <unordered_map>
 
 using namespace kon;
 
@@ -221,13 +213,6 @@ static void BENCHMARK_projection(benchmark::State &state) {
 
 	KN_TRACE("{} {} {} {}", model.x, model.y, model.z, model.w);
 }
-
-/*
- * rotate = 10ns
- * scale = 10ns
- * ortho = 10ns
- * trans = 10ns
- */
 
 BENCHMARK(BENCHMARK_projection);
 
