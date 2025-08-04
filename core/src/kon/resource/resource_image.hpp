@@ -63,8 +63,8 @@ public:
 			 Directory path, ShortString name, UUID groupID=UUID(0));
 	~ResourceImage();
 
-	void load_resource(ResourceLoadError *error) override;
-	void load_metadata(ResourceLoadError *error) override;
+	void load_resource(ResourceLoadError &error) override;
+	void load_metadata(ResourceLoadError &error) override;
 	void unload_resource() override;
 
 	u8 *get_image() const { return m_image; }

@@ -57,7 +57,7 @@ String String::substring(int a, int b) const {
 
 ShortString String::short_substring(int a, int b) const {
 	ShortString s;
-	memcpy(m_buffer, m_buffer+a, b-a);
+	memcpy(&s.m_buffer[0], m_buffer+a, b-a);
 	return s;
 }
 
@@ -69,7 +69,7 @@ ShortString &ShortString::append(const char *str) {
 
 ShortString ShortString::substring(int a, int b) const {
 	ShortString s;
-	memcpy(s.m_buffer, m_buffer+a, b-a+1);
+	memcpy(&s.m_buffer[0], m_buffer+a, b-a+1);
 	s.m_buffer[b-a] = '\0';
 	return s;
 }

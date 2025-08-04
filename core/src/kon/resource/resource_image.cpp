@@ -13,7 +13,7 @@ ResourceImage::ResourceImage(Allocator *allocator, Engine *engine,
 
 ResourceImage::~ResourceImage() = default;
 
-void ResourceImage::load_resource(ResourceLoadError *error) {
+void ResourceImage::load_resource(ResourceLoadError &error) {
 	load_metadata(error);
 
 	int x;
@@ -26,7 +26,7 @@ void ResourceImage::load_resource(ResourceLoadError *error) {
 	Resource::load_resource(error);
 }
 
-void ResourceImage::load_metadata(ResourceLoadError *error) {
+void ResourceImage::load_metadata(ResourceLoadError &error) {
 	
 	int n; // ??????
 	u32 ok = stbi_info(m_path.get_string().c_str(),
@@ -34,7 +34,7 @@ void ResourceImage::load_metadata(ResourceLoadError *error) {
 			&n);
 
 	if(ok == 0) {
-		*error = ResourceLoadError_APIError;
+		error = ResourceLoadError_APIError;
 		KN_CORE_ERROR("ResourceImage {}", m_path.c_str());
 		return;
 	}
@@ -55,6 +55,9 @@ void ResourceImage::load_metadata(ResourceLoadError *error) {
 }
 
 void ResourceImage::unload_resource() {
+	if(m_loadState != ResourceLoadState_FullyLoaded)
+		return;
+
 	stbi_image_free(m_image);
 
 	Resource::unload_resource();

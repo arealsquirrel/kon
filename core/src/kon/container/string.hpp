@@ -147,6 +147,8 @@ public:
 
 private:
 	char m_buffer[256] {};
+
+	friend String;
 };
 
 }

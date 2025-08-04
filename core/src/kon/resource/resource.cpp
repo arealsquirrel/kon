@@ -15,13 +15,13 @@ Resource::~Resource() {
 
 }
 
-void Resource::load_resource(ResourceLoadError *error) {
+void Resource::load_resource(ResourceLoadError &error) {
 	KN_ASSERT(m_loadState != ResourceLoadState_FullyLoaded, 
 			"resource already loaded. If you are remaking the resource, please call unload first");
 
-	if(*error != ResourceLoadError_None) {
+	if(error != ResourceLoadError_None) {
 		KN_CORE_WARN("Resource::load returning with error {}", 
-				load_error_to_string(*error));
+				load_error_to_string(error));
 
 		m_loadState = ResourceLoadState_Unloaded;
 	}
@@ -29,10 +29,10 @@ void Resource::load_resource(ResourceLoadError *error) {
 	m_loadState = ResourceLoadState_FullyLoaded;
 }
 
-void Resource::load_metadata(ResourceLoadError *error) {
-	if(*error != ResourceLoadError_None) {
+void Resource::load_metadata(ResourceLoadError &error) {
+	if(error != ResourceLoadError_None) {
 		KN_CORE_WARN("Resource::load_metadata returning with error {}", 
-				load_error_to_string(*error));
+				load_error_to_string(error));
 
 		m_loadState = ResourceLoadState_Unloaded;
 	}
@@ -44,11 +44,11 @@ void Resource::unload_resource() {
 	KN_ASSERT(m_loadState != ResourceLoadState_Unloaded, "resource already unloaded");
 }
 
-Pair<char*, u32> Resource::read_file_strings(ResourceLoadError *error, const char *path) {
+Pair<char*, u32> Resource::read_file_strings(ResourceLoadError &error, const char *path) {
 	std::ifstream file(path);
 
 	if(file.fail()) {
-		*error = ResourceLoadError_BadPath;
+		error = ResourceLoadError_BadPath;
 		KN_CORE_WARN("read_file_bytes ifstream failed on file {}", path);
 		return {nullptr, 0};
 	}
@@ -63,11 +63,11 @@ Pair<char*, u32> Resource::read_file_strings(ResourceLoadError *error, const cha
 	return Pair<char*, u32>(buffer, size);
 }
 
-Pair<char*, u32> Resource::read_file_bytes(ResourceLoadError *error, const char *path) {
+Pair<char*, u32> Resource::read_file_bytes(ResourceLoadError &error, const char *path) {
 	std::ifstream file(path, std::ios::ate | std::ios::binary);
 	
 	if(file.fail()) {
-		*error = ResourceLoadError_BadPath;
+		error = ResourceLoadError_BadPath;
 		KN_CORE_WARN("read_file_bytes ifstream failed on file {}", path);
 		return {nullptr, 0};
 	}
@@ -81,7 +81,7 @@ Pair<char*, u32> Resource::read_file_bytes(ResourceLoadError *error, const char 
 }
 
 
-nlohmann::json Resource::read_file_json(ResourceLoadError *error, const char *path) {
+nlohmann::json Resource::read_file_json(ResourceLoadError &error, const char *path) {
 	std::ifstream file(path);
 	nlohmann::json j;
 
@@ -90,7 +90,7 @@ nlohmann::json Resource::read_file_json(ResourceLoadError *error, const char *pa
 	} catch (nlohmann::json::exception &exception) {
 		KN_CORE_ERROR("nlohmann::json excpetion thrown while reading file {}\n \
 				{}",path, exception.what());
-		*error = ResourceLoadError_APIError;
+		error = ResourceLoadError_APIError;
 	}
 	
 	return j;

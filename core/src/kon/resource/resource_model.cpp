@@ -17,7 +17,7 @@ ResourceModel::~ResourceModel() {
 
 }
 
-void ResourceModel::load_resource(ResourceLoadError *error) {
+void ResourceModel::load_resource(ResourceLoadError &error) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -25,7 +25,7 @@ void ResourceModel::load_resource(ResourceLoadError *error) {
 
 	tinyobj::LoadObj(&attrib, &shapes, &materials, &err, m_path.get_string().c_str());
 	if(err.empty() == false) {
-		*error = ResourceLoadError_APIError;
+		error = ResourceLoadError_APIError;
 		KN_CORE_ERROR("ResourceModel {}\n tiny_obj_loader error {}", m_path.get_string().c_str(), err.c_str());
 		return;
 	}
@@ -61,11 +61,14 @@ void ResourceModel::load_resource(ResourceLoadError *error) {
 	Resource::load_resource(error);
 }
 
-void ResourceModel::load_metadata(ResourceLoadError *error) {
+void ResourceModel::load_metadata(ResourceLoadError &error) {
 	Resource::load_metadata(error);
 }
 
 void ResourceModel::unload_resource() {
+	if(m_loadState != ResourceLoadState_FullyLoaded)
+		return;
+
 	m_verticies.reset();
 	m_indices.reset();
 	Resource::unload_resource();

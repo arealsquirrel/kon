@@ -85,13 +85,13 @@ public:
 	 * loads the memory of the resource off the computer
 	 * EX: loads the image into memory
 	 */
-	virtual void load_resource(ResourceLoadError *error);
+	virtual void load_resource(ResourceLoadError &error);
 	
 	/*
 	 * loads data about the memory into memory
 	 * EX: loads the image size and channels into memory
 	 */
-	virtual void load_metadata(ResourceLoadError *error);
+	virtual void load_metadata(ResourceLoadError &error);
 
 	/*
 	 * unloads the resource from memory,
@@ -104,25 +104,25 @@ protected:
 	 * reads a file as characters and returns a char* 
 	 * YOU MUST FREE THIS MEMORY YOURSELF
 	 */
-	Pair<char*, u32> read_file_strings(ResourceLoadError *error, const char *path);
+	Pair<char*, u32> read_file_strings(ResourceLoadError &error, const char *path);
 	
 	/*
 	 * reads a file as bytes and returns a char* 
 	 * YOU MUST FREE THIS MEMORY YOURSELF
 	 */
-	Pair<char*, u32> read_file_bytes(ResourceLoadError *error, const char *path);
+	Pair<char*, u32> read_file_bytes(ResourceLoadError &error, const char *path);
 
 	/*
 	 * returns the json of the file 
 	 */
-	nlohmann::json read_file_json(ResourceLoadError *error, const char *path);
+	nlohmann::json read_file_json(ResourceLoadError &error, const char *path);
 
 protected:
 	Directory m_path;
 	ShortString m_name;
 	UUID m_groupID;
 
-	ResourceLoadState m_loadState;
+	ResourceLoadState m_loadState {ResourceLoadState_Unloaded};
 };
 
 }

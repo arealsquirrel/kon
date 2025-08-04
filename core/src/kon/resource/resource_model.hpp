@@ -33,8 +33,8 @@ public:
 			 Directory path, ShortString name, UUID groupID=UUID(0));
 	~ResourceModel();
 
-	void load_resource(ResourceLoadError *error) override;
-	void load_metadata(ResourceLoadError *error) override;
+	void load_resource(ResourceLoadError &error) override;
+	void load_metadata(ResourceLoadError &error) override;
 	void unload_resource() override;
 
 public:

@@ -14,8 +14,8 @@ public:
 			 Directory path, ShortString name, UUID groupID=UUID(0));
 	~ResourcePack();
 
-	void load_resource(ResourceLoadError *error) override;
-	void load_metadata(ResourceLoadError *error) override;
+	void load_resource(ResourceLoadError &error) override;
+	void load_metadata(ResourceLoadError &error) override;
 	void unload_resource() override;
 
 	const ShortString &get_shaders_path() const { return m_shaders; }

@@ -23,9 +23,17 @@ int main() {
 	ResourceLoadError error;
 	ResourcePack *pack = engine.get_resource_cache().add_resource<ResourcePack>(
 			Directory("../core/resources/kon_primitives/", engine.get_allocator_dynamic()), "kon_primitives");
-	pack->load_metadata(&error);
+	pack->load_metadata(error);
 	engine.get_resource_cache().add_resource_pack("kon_primitives");
 	engine.get_resource_cache().load_metadata_group(pack->get_instance_id());
+	engine.get_resource_cache().load_resource_group(pack->get_instance_id());
+
+	pack = engine.get_resource_cache().add_resource<ResourcePack>(
+			Directory("../core/resources/casino_pack/", engine.get_allocator_dynamic()), "casino");
+	pack->load_metadata(error);
+	engine.get_resource_cache().add_resource_pack("casino");
+	engine.get_resource_cache().load_metadata_group(pack->get_instance_id());
+	engine.get_resource_cache().load_resource_group(pack->get_instance_id());
 
 	KN_INSTRUMENT_CLOSE_FILE();
 

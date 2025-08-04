@@ -38,7 +38,7 @@ void iterate_directory(Allocator *allocator, const char *path, ArrayList<Directo
  */
 class Directory {
 public:
-	Directory(String path);
+	Directory(const String &path);
 	Directory(const char *str, Allocator *allocator);
 	Directory(const Directory &directory);
 	~Directory();

@@ -53,6 +53,8 @@ public:
 
 	Resource *get_resource(ShortString name);
 
+	bool has_resource(ShortString name);
+
 	template<class R>
 	R *get_resource(ShortString name) {
 		return get_resource(name)->cast<R>();

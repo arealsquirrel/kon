@@ -4,7 +4,7 @@
 namespace kon {
 
 
-Directory::Directory(String path)
+Directory::Directory(const String &path)
 	: m_stat(platform::get_path_stat(path.c_str())),
 	  m_path(path) {}
 
@@ -17,7 +17,6 @@ Directory::Directory(const Directory &directory)
 Directory::~Directory() = default;
 
 ShortString Directory::get_file_name() const {
-	if(m_path.compare("") == 0) return "";
 	int i = m_path.get_size();
 	for (; i >= 0; i--) {
 		if(m_path.char_at(i) == '/') break;
@@ -33,7 +32,6 @@ ShortString Directory::get_file_extension() const {
 	}
 
 	return m_path.short_substring(i+1, m_path.get_size());
-
 }
 
 }
