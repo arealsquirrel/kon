@@ -2,6 +2,7 @@
 #define KN_DIRECTORY_HPP
 
 #include "kon/container/arraylist.hpp"
+#include "kon/container/iterate.hpp"
 #include "kon/container/string.hpp"
 #include "kon/core/allocator.hpp"
 #include "kon/core/core.hpp"
@@ -81,6 +82,14 @@ public:
 private:
 	PathStat m_stat;
 	String m_path;
+};
+
+namespace views {
+
+inline const view_function<Directory> valid = [](const Directory &dir) 		 { return dir.get_valid(); };
+inline const view_function<Directory> directories = [](const Directory &dir) { return dir.get_valid() && dir.get_stat().directory; };
+inline const view_function<Directory> files = [](const Directory &dir) 	   	 { return dir.get_valid() && !dir.get_stat().directory; };
+
 };
 
 }

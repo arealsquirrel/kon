@@ -11,7 +11,6 @@ constexpr u32 constexpr_strlen(const char* s) {
     return std::char_traits<char>::length(s);
 }
 
-
 template<typename T>
 using ForEachFunction = std::function<void(T &element, u32 index)>;
 
@@ -70,6 +69,8 @@ public:
 private:
 	T value;
 };
+
+
 
 }
 

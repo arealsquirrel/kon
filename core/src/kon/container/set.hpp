@@ -49,40 +49,140 @@ public:
     }
 
     ~Set() {
-        clear(m_rootNode);
+        reset(m_rootNode);
 
 		m_allocator->free_mem(KN_MEM_POINTER(m_nil), sizeof(TreeNode));
     }
 
 public:
-    void clear(TreeNode *from) {
+	// ----------- MODIFICATION ----------- //
+    Pair<const Key, Value> &add(const Pair<const Key, Value> &pair) {
+        u64 hash = m_hash(pair.first);
+        TreeNode *parent = nullptr;
+        TreeNode *curr = m_rootNode;
+        while (curr != m_nil) {
+            parent = curr;
+            if(m_hash(curr->m_pair.first) > hash) {
+                curr = curr->m_left;
+            } else {
+                curr = curr->m_right;
+            }
+        }
+
+		TreeNode *node = m_allocator->allocate<TreeNode>(1, pair.first, pair.second,
+		 		true, m_nil, m_nil, parent);
+
+        if(parent == nullptr) {
+            m_rootNode = node;
+        } else if(m_hash(parent->m_pair.first) > hash) {
+            parent->m_left = node;
+        } else {
+            parent->m_right = node;
+        }
+
+        if(node->m_parent == nullptr) {
+            node->m_color = 0;
+            return node->m_pair;
+        }
+
+        if(node->m_parent->m_parent == nullptr) return node->m_pair;
+        recolor(node);
+        return node->m_pair;
+    }
+
+	// resets the tree
+    void reset(TreeNode *from) {
         while (from != m_nil) {
             if(from->m_left == m_nil && from->m_right == m_nil) {
 				m_allocator->free(from);
                 return;
             }
 
-            clear(from->m_left);
+            reset(from->m_left);
             from->m_left = m_nil;
-            clear(from->m_right);
+            reset(from->m_right);
             from->m_right = m_nil;
         }
-
-		// m_nodes.reset();
     }
 
-    TreeNode *minimum(TreeNode *node) {
+	// find the minimum hash in the tree
+    inline TreeNode *minimum(TreeNode *node) {
         while (node->m_left != m_nil) {
             node = node->m_left;
         }
         return node;
     }
 
-    TreeNode *maximum(TreeNode *node) {
+	// find the maximum hash in the tree
+    inline TreeNode *maximum(TreeNode *node) {
         while (node->m_right != m_nil) {
             node = node->m_right;
         }
         return node;
+    }
+
+	// erases a key from the array
+	inline void erase(const Key key) {
+		delete_node(find_node(key));
+	}
+
+	inline TreeNode *find_node(const Key key) const {
+		u64 hash = m_hash(key);
+        TreeNode *curr = m_rootNode;
+        while(curr != m_nil) {
+            if(m_hash(curr->m_pair.first) == hash) return curr;
+            if(m_hash(curr->m_pair.first) > hash) {
+                curr = curr->m_left;
+            } else {
+                curr = curr->m_right;
+            }
+        }
+        return curr;
+    }
+
+	inline bool has_key(const Key key) {
+		return (find_node(key) != m_nil);
+	}
+
+    inline Pair<const Key, Value> &find(const Key key) { 
+		return find_node(key)->m_pair; 
+	}
+
+    inline TreeNode *get_root() const { return m_rootNode; }
+
+	void delete_node(TreeNode *node) {
+        TreeNode *y = node;
+        TreeNode *x = nullptr;
+        int y_original_color = y->m_color;
+        if (node->m_left == m_nil) {
+            x = node->m_right;
+            rb_transplant(node, node->m_right);
+        } else if (node->m_right == m_nil) {
+            x = node->m_left;
+            rb_transplant(node, node->m_left);
+        } else {
+            y = minimum(node->m_right);
+            y_original_color = y->m_color;
+            x = y->m_right;
+            if (y->m_parent == node) {
+                x->m_parent = y;
+            } else {
+                rb_transplant(y, y->m_right);
+                y->m_right = node->m_right;
+                y->m_right->m_parent = y;
+            }
+
+            rb_transplant(node, y);
+            y->m_left = node->m_left;
+            y->m_left->m_parent = y;
+            y->m_color = node->m_color;
+        }
+
+		m_allocator->free(node);
+        // delete node;
+        if (y_original_color == 0) {
+            delete_fix(x);
+        }
     }
 
 private:
@@ -157,105 +257,6 @@ private:
         }
         x->m_color = 0;
     }
-
-public:
-    Pair<const Key, Value> &add(const Pair<const Key, Value> &pair) {
-        u64 hash = m_hash(pair.first);
-        TreeNode *parent = nullptr;
-        TreeNode *curr = m_rootNode;
-        while (curr != m_nil) {
-            parent = curr;
-            if(m_hash(curr->m_pair.first) > hash) {
-                curr = curr->m_left;
-            } else {
-                curr = curr->m_right;
-            }
-        }
-
-		TreeNode *node = m_allocator->allocate<TreeNode>(1, pair.first, pair.second,
-		 		true, m_nil, m_nil, parent);
-		// TreeNode *node = m_nodes.add()
-
-        if(parent == nullptr) {
-            m_rootNode = node;
-        } else if(m_hash(parent->m_pair.first) > hash) {
-            parent->m_left = node;
-        } else {
-            parent->m_right = node;
-        }
-
-        if(node->m_parent == nullptr) {
-            node->m_color = 0;
-            return node->m_pair;
-        }
-
-        if(node->m_parent->m_parent == nullptr) return node->m_pair;
-        recolor(node);
-        return node->m_pair;
-    }
-
-    void delete_node(TreeNode *node) {
-        TreeNode *y = node;
-        TreeNode *x = nullptr;
-        int y_original_color = y->m_color;
-        if (node->m_left == m_nil) {
-            x = node->m_right;
-            rb_transplant(node, node->m_right);
-        } else if (node->m_right == m_nil) {
-            x = node->m_left;
-            rb_transplant(node, node->m_left);
-        } else {
-            y = minimum(node->m_right);
-            y_original_color = y->m_color;
-            x = y->m_right;
-            if (y->m_parent == node) {
-                x->m_parent = y;
-            } else {
-                rb_transplant(y, y->m_right);
-                y->m_right = node->m_right;
-                y->m_right->m_parent = y;
-            }
-
-            rb_transplant(node, y);
-            y->m_left = node->m_left;
-            y->m_left->m_parent = y;
-            y->m_color = node->m_color;
-        }
-
-		m_allocator->free(node);
-        // delete node;
-        if (y_original_color == 0) {
-            delete_fix(x);
-        }
-    }
-public:
-    inline TreeNode *find_node(const Key key) const {
-		u64 hash = m_hash(key);
-        TreeNode *curr = m_rootNode;
-        while(curr != m_nil) {
-            if(m_hash(curr->m_pair.first) == hash) return curr;
-            if(m_hash(curr->m_pair.first) > hash) {
-                curr = curr->m_left;
-            } else {
-                curr = curr->m_right;
-            }
-        }
-        return curr;
-    }
-
-	inline bool has_key(const Key key) {
-		return (find_node(key) != m_nil);
-	}
-
-    inline Pair<const Key, Value> &find(const Key key) { 
-		return find_node(key)->m_pair; 
-	}
-
-    inline TreeNode *get_root() const { return m_rootNode; } 
-
-	inline void remove(const Key key) {
-		delete_node(find_node(key));
-	}
 
 private:
     void rotate_left(TreeNode *x) {

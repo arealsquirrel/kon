@@ -1,9 +1,9 @@
 #ifndef KN_HASHMAP_HPP
 #define KN_HASHMAP_HPP
 
+#include "kon/container/iterate.hpp"
 #include "kon/core/allocator.hpp"
 #include "kon/core/util.hpp"
-#include "kon/debug/log.hpp"
 #include <functional>
 #include <kon/core/core.hpp>
 #include <limits>
@@ -56,10 +56,13 @@ public:
 			pair.second.~Value();
 		});
 
-		m_allocator->free_mem(KN_MEM_POINTER(m_nodes), get_size() * sizeof(Node));
+		m_allocator->free_mem(KN_MEM_POINTER(m_nodes), get_capacity() * sizeof(Node));
 	}
 
 public:
+	// ----------- MODIFICATION ----------- //
+	
+	// adds the pair into the hashmap
 	Pair<const Key, Value> &add(const Pair<const Key, Value> &entry) {
 		auto &tempEntry = entry;
 		u32 hash = m_hash(entry.first);
@@ -86,7 +89,7 @@ public:
 				std::swap(vpsl, m_nodes[entryIndex].psl);
 			}
 
-			entryIndex = (entryIndex+1) % get_size();
+			entryIndex = (entryIndex+1) % get_capacity();
 			vpsl++;
 		}
 
@@ -94,14 +97,15 @@ public:
 		return n->pair;
 	}
 
-	void remove(const Key &key) {
+	// erases the key from the hashmap
+	void erase(const Key &key) {
 		u32 entryIndex = find_entry_index(key);
 		
 		m_nodes[entryIndex].pair.first.~Key();
 		m_nodes[entryIndex].pair.second.~Value();
 		m_nodes[entryIndex].psl = c_max_psl;
 
-		entryIndex = (entryIndex+1) % get_size();
+		entryIndex = (entryIndex+1) % get_capacity();
 		while(m_nodes[entryIndex].psl != c_max_psl) {
 			if(m_nodes[entryIndex].psl > 0) {
 				m_nodes[entryIndex].psl -= 1;
@@ -118,36 +122,51 @@ public:
 				return;
 			}
 
-			entryIndex = (entryIndex+1) % get_size();
+			entryIndex = (entryIndex+1) % get_capacity();
 		}
 	}
 
+	// ----------- ACCESS ----------- //
+	
+	// returns the pair of the hashmap entry with the key
 	inline Pair<const Key, Value> &find_entry(const Key &key) {
 		return m_nodes[find_entry_index(key)].pair;
 	}
-	
-	/*
-	 * this thing is special because its foreach
-	 * does not fuck with indexes
-	 */
-	void for_each(std::function<void( Pair<const Key, Value>& )> func) {
-		for(u32 i = 0; i < get_size(); i++) {
-			if(m_nodes[i].psl != c_max_psl) {
-				func(m_nodes[i].pair);
-			}
-		}
-	}
 
-public:
 	inline u32 get_count() const { return m_count; }
-	inline u32 get_size() const { return m_buckets * c_skipIndex; }
+	inline u32 get_capacity() const { return m_buckets * c_skipIndex; }
 	inline float load_factor() { return ((float)m_count / (m_buckets * c_skipIndex)); }
 
 	bool has_key(const Key &key) const { return (find_entry_index(key) != c_max_psl); }
 
-	Node *get_array() const { return m_nodes; }
+	Node *get_buffer() const { return m_nodes; }
 
 	Pair<const Key, Value> &operator[](const Key &key) { return find_entry(key); }
+
+public:
+	void for_each(foreach_function<Pair<const Key,Value>> f) {
+		for(u32 i = 0; i < get_capacity(); i++) {
+			if(m_nodes[i].psl != c_max_psl)
+				f(m_nodes[i].pair);
+		}
+	}
+
+	void for_each(const foreach_function<Pair<const Key,Value>> f) const {
+		for(u32 i = 0; i < get_capacity(); i++) {
+			if(m_nodes[i].psl != c_max_psl)
+				f(m_nodes[i].pair);
+
+		}
+	}
+
+	void view(const view_function<Pair<const Key,Value>> v,
+			foreach_function<Pair<const Key,Value>> f) {
+		for(u32 i = 0; i < get_capacity(); i++) {
+			auto &element = m_nodes[i];
+			if(element.psl != c_max_psl && v(element.pair))
+				f(element.pair);
+		}
+	}
 
 private:
 	inline u32 find_entry_index(const Key &key) const {
@@ -164,7 +183,7 @@ private:
 				return entryIndex;
 			}
 
-			entryIndex = (entryIndex+1) % get_size();
+			entryIndex = (entryIndex+1) % get_capacity();
 			vpsl++;
 		}
 
