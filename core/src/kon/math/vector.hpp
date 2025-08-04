@@ -10,52 +10,36 @@ namespace kon {
 
 /*
  * template definition of a vector of variable size
+ * all vectors will hold a Type vec that can be accessed as an array
+ *
+ * the vector template definitions should only detail how the vector is stored
+ * i dont wanna see any implementation in there
+ *
+ * i swear to god future me.
  */
 template<u8 size, typename Type>
 struct Vector {
 public:
-	constexpr u8 get_size() { return size; }
-
-	Type v[size];
-
-public:
-	Type operator[](u8 index) const { 
-		KN_ASSERT(index <= size, "larger index than vector size")
-		return v[index]; 
-	}
-
-	constexpr void for_each(ForEachFunction<Type> function) {
-		for(int i = 0; i < size; i++) {
-			function(v[i], i);
-		}
-	}
-
-	u64 hash() const {
-		u64 seed = size;
-
-		// for_each([&](Type e, u32) {
-		for(int i = 0; i < size; i++) {
-			u64 x = std::hash<Type>{}(v[i]);
-			x = ((x >> 16) ^ x) * 0x45d9f3b;
-    		x = ((x >> 16) ^ x) * 0x45d9f3b;
-    		x = (x >> 16) ^ x;
-    		seed ^= x + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		}
-
-		return seed;
-	}
-
-	bool operator ==(const Vector<size, Type> &vec) const {
-		for(int i = 0; i < size; i++) {
-			if(vec[i] != v[i]) return false;
-		}
-
-		return true;
-	}
+	Type vec[size];
 };
 
 template<class V>
 u64 hash_vector(V v);
+
+/*
+ * returns the norm or the magnitude of the vector
+ * the p value is always 2
+ */
+template<class V>
+float vector_norm(V vector);
+
+template<class V>
+V vector_add(V va, V vb);
+
+template<class V>
+float vector_dot(V va, V vb);
+
+Vector<3,float> vector_cross(Vector<3,float> va, Vector<3,float> vb);
 
 }
 

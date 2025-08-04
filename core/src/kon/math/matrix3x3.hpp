@@ -44,29 +44,6 @@ public:
 	Matrix(Type matrix[3][3]) 
 			: mat(matrix) {}
 
-	Matrix operator *(const Matrix<3,3,Type> &b) {
-		Matrix<3,3,Type> result;
-		result.mat[0][0] = mat[0][0]*b.mat[0][0] + mat[0][1]*b.mat[1][0] + mat[0][2]*b.mat[2][0];
-		result.mat[0][1] = mat[0][0]*b.mat[0][1] + mat[0][1]*b.mat[1][1] + mat[0][2]*b.mat[2][1];
-		result.mat[0][2] = mat[0][0]*b.mat[0][2] + mat[0][1]*b.mat[1][2] + mat[0][2]*b.mat[2][2];
-
-		result.mat[1][0] = mat[1][0]*b.mat[0][0] + mat[1][1]*b.mat[1][0] + mat[1][2]*b.mat[2][0];
-		result.mat[1][1] = mat[1][0]*b.mat[0][1] + mat[1][1]*b.mat[1][1] + mat[1][2]*b.mat[2][1];
-		result.mat[1][2] = mat[1][0]*b.mat[0][2] + mat[1][1]*b.mat[1][2] + mat[1][2]*b.mat[2][2];
-
-		result.mat[2][0] = mat[2][0]*b.mat[0][0] + mat[2][1]*b.mat[1][0] + mat[2][2]*b.mat[2][0];
-		result.mat[2][1] = mat[2][0]*b.mat[0][1] + mat[2][1]*b.mat[1][1] + mat[2][2]*b.mat[2][1];
-		result.mat[2][2] = mat[2][0]*b.mat[0][2] + mat[2][1]*b.mat[1][2] + mat[2][2]*b.mat[2][2];
-		return result;
-	}
-
-public:
-	
-	/*
-	 * returns an instance of the identity matrix
-	 */
-	static Matrix identity(Type n=1) { return Matrix<3,3,Type>({n,0,0}, {0,n,0}, {0,0,n}); }
-
 public:
 	Type mat[3][3];
 };

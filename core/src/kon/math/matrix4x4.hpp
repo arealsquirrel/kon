@@ -25,6 +25,8 @@ public:
 	}
 
 	Matrix(VectorType row1, VectorType row2, VectorType row3, VectorType row4) {
+		memset(&mat[0][0], 0, 16 * sizeof(Type));
+		
 		mat[0][0] = row1.vec[0];
 		mat[0][1] = row1.vec[1];
 		mat[0][2] = row1.vec[2];
@@ -48,28 +50,6 @@ public:
 
 	Matrix(Type matrix[4][4]) 
 			: mat(matrix) {}
-
-	Matrix operator *(const Matrix<4,4,Type> b) const {
-		Matrix<4,4,Type> result;
-
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 4; j++) {
-				result.mat[i][j] = 0;
-				for (int k = 0; k < 4; k++) {
-					result.mat[i][j] += mat[i][k] * b.mat[k][j];
-				}
-			}
-		}
-
-		return result;
-	}
-
-public:
-	
-	/*
-	 * returns an instance of the identity matrix
-	 */
-	static Matrix identity(Type n=1) { return Matrix<4,4,Type>({n,0,0,0}, {0,n,0,0}, {0,0,n,0}, {0,0,0,n}); }
 
 public:
 	Type mat[4][4];

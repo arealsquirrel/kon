@@ -3,6 +3,7 @@
 #include "vector2.hpp"
 #include "vector3.hpp"
 #include "vector4.hpp"
+#include <cmath>
 #include <functional>
 
 namespace kon {
@@ -116,6 +117,62 @@ u64 hash_vector(Vector4Int v) {
 	}
 
 	return seed;
+}
+
+/* ---------- VECTOR NORM ---------- */
+template<>
+float vector_norm(Vector2 vector) {
+	return std::sqrt(vector.x*vector.x + vector.y*vector.y);
+}
+
+template<>
+float vector_norm(Vector3 vector) {
+	return std::sqrt(vector.x*vector.x + vector.y*vector.y + vector.z*vector.z);
+}
+
+template<>
+float vector_norm(Vector4 vector) {
+	return std::sqrt(vector.x*vector.x + vector.y*vector.y +
+			 		 vector.z*vector.z + vector.w*vector.w);
+}
+
+/* ---------- VECTOR ADD ---------- */
+template<>
+Vector2 vector_add(Vector2 va, Vector2 vb) {
+	return Vector2{va.x+vb.x, va.y+vb.y};
+}
+
+template<>
+Vector3 vector_add(Vector3 va, Vector3 vb) {
+	return Vector3{va.x+vb.x, va.y+vb.y, va.z+vb.z};
+}
+
+template<>
+Vector4 vector_add(Vector4 va, Vector4 vb) {
+	return Vector4{va.x+vb.x, va.y+vb.y, va.z+vb.z, va.w+vb.w};
+}
+
+/* ---------- VECTOR DOT ---------- */
+template<>
+float vector_dot(Vector2 va, Vector2 vb) {
+	return va.x*vb.x + va.y*vb.y;
+}
+
+template<>
+float vector_dot(Vector3 va, Vector3 vb) {
+	return va.x*vb.x + va.y*vb.y + va.z*vb.z;
+}
+
+template<>
+float vector_dot(Vector4 va, Vector4 vb) {
+	return va.x*vb.x + va.y*vb.y + va.z*vb.z + va.w*vb.w;
+}
+
+/* ---------- VECTOR CROSS ---------- */
+Vector<3,float> vector_cross(Vector<3,float> va, Vector<3,float> vb) {
+	return {va.y*vb.z - va.z*vb.y,
+			va.z*vb.x - va.x*va.z,
+			va.x*vb.y - va.y*vb.z};
 }
 
 }

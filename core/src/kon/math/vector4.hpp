@@ -9,7 +9,7 @@ template<typename Type>
 struct Vector<4, Type> {
 public:
 	union {
-		Type vec[4];
+		Type vec[4] = {0,0,0,0};
 
 		struct {
 			Type x;
