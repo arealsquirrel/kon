@@ -34,6 +34,7 @@ public:
 	ModuleArray &get_modules() { return m_moduleArray; }
 	EventBus &get_event_bus() { return m_eventBus; }
 	ResourceCache &get_resource_cache() { return m_resourceCache; }
+	Window &get_window() { return m_window; }
 
 	void mem_dump();
 
@@ -54,7 +55,7 @@ private:
 	
 	ModuleArray m_moduleArray;
 	EventBus m_eventBus;
-	// Window m_window;
+	Window m_window;
 	ResourceCache m_resourceCache;
 
 	bool m_running {true};

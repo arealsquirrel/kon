@@ -3,6 +3,7 @@
 
 #include "kon/core/allocator.hpp"
 #include "kon/engine/module.hpp"
+#include "modules/graphics/vulkan/vulkan_context.hpp"
 
 namespace kon {
 
@@ -16,6 +17,7 @@ public:
 	void update() override;
 
 private:
+	VulkanContext m_context;
 };
 
 }

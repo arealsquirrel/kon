@@ -4,7 +4,7 @@
 #include "kon/core/object.hpp"
 #include <kon/core/core.hpp>
 
-#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 namespace kon {

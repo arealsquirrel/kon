@@ -3,6 +3,7 @@
 #include "kon/engine/engine.hpp"
 #include "kon/resource/resource.hpp"
 #include "kon/resource/resource_pack.hpp"
+#include "modules/graphics/graphics_module.hpp"
 #include <kon/debug/log.hpp>
 #include <kon/debug/instrumentation.hpp>
 
@@ -19,6 +20,9 @@ int main() {
 	};
 	
 	Engine engine(info);
+
+	engine.get_modules().add_module<GraphicsModule>();
+
 	engine.init();
 
 	ResourceLoadError error;

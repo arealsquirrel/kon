@@ -31,6 +31,7 @@ target_link_libraries(${PROJECT_NAME}
 	nlohmann_json::nlohmann_json
 	spdlog
 	glfw
+	vulkan
 )
 
 

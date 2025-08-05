@@ -1,17 +1,26 @@
 #ifndef KN_VULKAN_CONTEXT_HPP
 #define KN_VULKAN_CONTEXT_HPP
 
+#include "kon/core/object.hpp"
+#include "kon/engine/engine.hpp"
+#include <kon/debug/log.hpp>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
 namespace kon {
 
+#define KN_ENABLE_VALIDATION true
+
+#define KN_VULKAN_ERR_CHECK(opp) if(opp != VK_SUCCESS) { KN_ERROR("VULKAN ERROR YOUR COOKED"); }
+
 /*
  * all vulkan objects will contain the vulkan context
  */
-class VulkanContext {
+class VulkanContext : public Object {
+KN_OBJECT(VulkanContext, Object)
+
 public:
-	VulkanContext();
+	VulkanContext(Engine *engine);
 	~VulkanContext();
 
 	// creates all the fun vulkan things
@@ -23,15 +32,23 @@ public:
 private:
 	void create_instance();
 	void create_debug_utils();
+	void create_surface();
 	void select_physical_device();
 	void create_device();
 	void create_swapchain();
 
 private:
 	VkInstance m_instance;
+	VkDebugUtilsMessengerEXT m_debugMessenger;
+	VkSurfaceKHR m_surface;
 	VkPhysicalDevice m_physicalDevice;
+	VkPhysicalDeviceProperties m_deviceProperties;
 	VkDevice m_device;
-	VkDebugUtilsMessengerEXT _debug_messenger;
+
+	VkQueue m_graphicsQueue;
+	VkQueue m_presentQueue;
+
+	VkSampleCountFlagBits m_msaaSamples;
 };
 
 }

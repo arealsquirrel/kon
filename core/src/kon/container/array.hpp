@@ -20,14 +20,14 @@ public:
 	Array(const Array &array)
 		: m_count(array.m_count) {
 
-		for(int i = 0; i < m_count; i++) {
+		for(u32 i = 0; i < m_count; i++) {
 			m_array[i] = array.get(i);
 		}
 	}
 
 	Array(std::initializer_list<T> array) {
-		for(int i = 0; i < array.size(); i++) {
-			add(array[i]);
+		for(const auto &elm : array) {
+			add(elm);
 		}
 	}
 
@@ -49,7 +49,10 @@ public:
 	inline const T &get(u32 i) const { return m_array[i]; }
 
 	// get the array pointer to the buffer
-	inline T *get_buffer() const { return &m_array[0]; }
+	inline T *get_buffer() { return &m_array[0]; }
+
+	// get the array pointer to the buffer
+	inline const T *get_buffer() const { return &m_array[0]; }
 
 	// returns the amount of elements added to the array
 	inline u32 get_count() const { return m_count; }
