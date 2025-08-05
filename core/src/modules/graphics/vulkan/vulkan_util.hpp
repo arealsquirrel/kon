@@ -10,11 +10,24 @@
 namespace kon {
 
 const Array<const char*, 1> validation_layers = {
-	"VK_LAYER_KHRONOS_validation"
+	"VK_LAYER_KHRONOS_validation",
 };
 
-const Array<const char*, 1> device_extentions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+const Array<const char*, 5> device_extentions = {
+	// lets us use the swapchain
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+
+	// NO MORE RENDERPASSES AND LIKE CRAP AND SHIT
+	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+
+	// makes sync not suck
+	VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+
+	// adds “pointers to buffer memory in shaders”.
+	VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+
+	// you can make one bigboy buffer with all your textures and just use that
+	VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 };
 
 struct SwapChainSupportDetails {
