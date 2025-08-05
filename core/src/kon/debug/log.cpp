@@ -1,6 +1,8 @@
 
 #include "log.hpp"
 
+#ifdef KN_ENABLE_LOGGING
+
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
@@ -30,3 +32,4 @@ Log::~Log() = default;
 
 }
 
+#endif

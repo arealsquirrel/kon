@@ -1,6 +1,8 @@
 
 #include "instrumentation.hpp"
 
+#ifdef KN_ENABLE_PROFILING
+
 namespace kon {
 
 Instrumentor::Instrumentor() = default;
@@ -75,3 +77,4 @@ InstrumentorMeasure::~InstrumentorMeasure() {
 
 }
 
+#endif

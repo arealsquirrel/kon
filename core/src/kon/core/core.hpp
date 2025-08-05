@@ -1,7 +1,12 @@
 #ifndef KN_CORE_HPP
 #define KN_CORE_HPP
 
-#define KN_VERSION "1.0.0"
+#include <config/config.hpp>
+
+#ifdef KN_DEBUG
+	#define KN_ENABLE_LOGGING
+	#define KN_ENABLE_PROFILING
+#endif
 
 #define KN_MEM_POINTER(var) reinterpret_cast<char*>(var)
 #define KN_CAST_MEM(var, type) reinterpret_cast<type*>(var)

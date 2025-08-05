@@ -1,7 +1,4 @@
 
-CPMAddPackage("gh:gabime/spdlog@1.15.3")
-CPMAddPackage("gh:google/googletest@1.17.0")
-
 CPMAddPackage(
   NAME nlohmann_json
   VERSION 3.12.0
@@ -10,15 +7,18 @@ CPMAddPackage(
   URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
 )
 
-if(KN_BUILD_BENCHMARKS)
-	set(BENCHMARK_ENABLE_TESTING OFF)
-	set(BENCHMARK_ENABLE_ASSEMBLY_TESTS OFF)
-	CPMAddPackage("gh:google/benchmark@1.9.4")
-endif()
-
 set(GLFW_BUILD_TESTS OFF)
 set(GLFW_BUILD_EXAMPLES OFF)
 set(GLFW_BUILD_DOCS OFF)
 CPMAddPackage("gh:glfw/glfw#7b6aead")
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	if(KN_BUILD_BENCHMARKS)
+		set(BENCHMARK_ENABLE_TESTING OFF)
+		set(BENCHMARK_ENABLE_ASSEMBLY_TESTS OFF)
+		CPMAddPackage("gh:google/benchmark@1.9.4")
+	endif()
 
+	CPMAddPackage("gh:gabime/spdlog@1.15.3")
+	CPMAddPackage("gh:google/googletest@1.17.0")
+endif()

@@ -1,0 +1,10 @@
+
+#define KN_VERSION_MAJOR 1
+#define KN_VERSION_MINOR 0
+#define KN_VERSION_PATCH 0
+
+#define KN_BUILD_TYPE Debug
+/* #undef KN_ENABLE_LOGGING */
+/* #undef KN_ENABLE_PROFILING */
+/* #undef KN_BUILD_BENCHMARKS */
+#define KN_DEBUG

@@ -10,6 +10,7 @@ using namespace kon;
 
 int main() {
 	KN_INSTRUMENT_NEW_FILE("logs/startup.json");
+	KN_TRACE("where are my logs");
 
 	EngineCreateInfo info {
 		40000000,  // 40MB

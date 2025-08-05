@@ -1,10 +1,13 @@
 #ifndef KN_INSTRUMENTATION_HPP
 #define KN_INSTRUMENTATION_HPP
 
+#include <config/config.hpp>
+#include <kon/core/core.hpp>
+
+#ifdef KN_ENABLE_PROFILING
+
 #include "kon/container/string.hpp"
 #include <fstream>
-#include <kon/core/core.hpp>
-#include <chrono>
 #include <kon/debug/timer.hpp>
 
 
@@ -61,6 +64,8 @@ private:
 	u32 m_threadID;
 };
 
+}
+
 #define KN_INSTRUMENT_TIMER(tname, ...) ::kon::InstrumentorMeasure tname(__VA_ARGS__);
 #define KN_INSTRUMENT_NEW_FILE(name) ::kon::Instrumentor::Get().open_file(name);
 #define KN_INSTRUMENT_CLOSE_FILE() ::kon::Instrumentor::Get().close_file();
@@ -68,6 +73,15 @@ private:
 #define KN_INSTRUMENT_SCOPE(...) KN_INSTRUMENT_TIMER(kn_timer, __VA_ARGS__)
 #define KN_INSTRUMENT_FUNCTION() KN_INSTRUMENT_TIMER(kn_function, __func__, 0)
 
-}
+#else
+
+#define KN_INSTRUMENT_TIMER(tname, ...) 
+#define KN_INSTRUMENT_NEW_FILE(name) 
+#define KN_INSTRUMENT_CLOSE_FILE()
+
+#define KN_INSTRUMENT_SCOPE(...)
+#define KN_INSTRUMENT_FUNCTION()
+
+#endif
 
 #endif
