@@ -15,23 +15,6 @@ public:
 	using VArray = Type[size];
 
 public:
-	/*
-	 * default intilizer makes an empty matrix
-	 */
-	Matrix() = default;
-
-
-	Matrix(VectorType row1, VectorType row2) {
-		mat[0][0] = row1.vec[0];
-		mat[0][1] = row1.vec[1];
-
-		mat[1][0] = row2.vec[0];
-		mat[1][1] = row2.vec[1];
-	}
-
-	Matrix(Type matrix[2][2]) 
-			: mat(matrix) {}
-public:
 	Type mat[2][2];
 };
 

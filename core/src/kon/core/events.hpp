@@ -51,7 +51,7 @@ public:
 		ArrayList<EventCallback> arr = m_listeners[m_eventClassIDToIndex.find(
 				E::get_static_uuid()).second];
 
-		arr.for_each([&](EventCallback &l, u32){
+		arr.for_each([&](EventCallback &l){
 			l.m_callback(event);
 		});
 	}

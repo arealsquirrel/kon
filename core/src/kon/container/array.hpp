@@ -1,7 +1,7 @@
 #ifndef KN_ARRAY_HPP
 #define KN_ARRAY_HPP
 
-#include "kon/core/allocator.hpp"
+#include "kon/container/iterate.hpp"
 #include <initializer_list>
 #include <kon/core/util.hpp>
 #include <kon/core/core.hpp>
@@ -10,49 +10,96 @@ namespace kon {
 
 
 /*
- * fixed size array that works with const
- *
- * it is also completetly constexpr now.
+ * fixed size array
  */
 template<typename T, u32 size>
 class Array {
 public:
 	Array() = default;
 
-	constexpr Array(std::initializer_list<T> list) {
-		int index = 0;
-		for(const T &element : list) {
-			m_array[index] = element;
-			index++;
+	Array(const Array &array)
+		: m_count(array.m_count) {
+
+		for(int i = 0; i < m_count; i++) {
+			m_array[i] = array.get(i);
 		}
 	}
 
-	/*
-	 * copy constructor inherits allocator
-	 * @warning, this shit does not work
-	 */
-	constexpr Array(const Array &array) = default;
+	Array(std::initializer_list<T> array) {
+		for(int i = 0; i < array.size(); i++) {
+			add(array[i]);
+		}
+	}
+
 	~Array() = default;
 
 public:
-	constexpr u32 get_size() { return size; }
+	// ----------- MODIFICATION ----------- //
+	T &add(const T &element) {
+		m_array[m_count++] = element;
+		return m_array[m_count-1];
+	}
 
-	constexpr T *get_array() const { return m_array; }
+	inline void reset() { m_count = 0; }
+
+	// ----------- ACCESS ----------- //
+	
+	// get an element out of the array
+	inline T &get(u32 i) { return m_array[i]; }
+	inline const T &get(u32 i) const { return m_array[i]; }
+
+	// get the array pointer to the buffer
+	inline T *get_buffer() const { return &m_array[0]; }
+
+	// returns the amount of elements added to the array
+	inline u32 get_count() const { return m_count; }
+
+	// returns size of the array
+	inline u32 get_capacity() const { return size; }
+
+	// checks if the count is 0
+	inline bool empty() const { return (m_count == 0); }
+
+	// ----------- OPERATORS ----------- //
+	inline T& operator[](u32 index) {
+		return get(index);
+	}
+
+	const T& operator[](u32 index) const {
+		return get(index);
+	}
 
 public:
-	constexpr T &operator [] (u32 index){ return m_array[index]; }
-	constexpr const T &operator [] (u32 index) const { return m_array[index]; }
+	void for_each(foreach_function<T> f) {
+		for(u32 i = 0; i < m_count; i++) {
+			f(m_array[i]);
+		}
+	}
 
-	constexpr T &get(u32 index) { return m_array[index]; }
-	constexpr const T &get(u32 index) const { return m_array[index]; }
+	void for_each(const foreach_function<T> f) const {
+		for(u32 i = 0; i < m_count; i++) {
+			f(m_array[i]);
+		}
+	}
 
-	constexpr void for_each(ForEachFunction<T> func) {
-		for (int i = 0; i < size; i++) {
-			func(m_array[i], i);
+	void view(const view_function<T> v, foreach_function<T> f) {
+		for(u32 i = 0; i < m_count; i++) {
+			auto &element = m_array[i];
+			if(v(element))
+				f(element);
+		}
+	}
+
+	void view(const view_function<T> v, const foreach_function<T> f) const {
+		for(u32 i = 0; i < m_count; i++) {
+			auto &element = m_array[i];
+			if(v(element))
+				f(element);
 		}
 	}
 
 private:
+	u32 m_count {0};
 	T m_array[size];
 };
 

@@ -10,46 +10,6 @@
 
 namespace kon {
 
-/*
- * abstract class that has all the string stuff,
- * but we have subclasses that handles the stack+heap strings
- */
-
-/*
-class ImplString {
-public:
-	ImplString() = default;
-	~ImplString() = default;
-	ImplString(const ImplString &imp) = default;
-
-public:
-	inline u32 compare(const char *str) const { return strcmp(get_buffer(), str); }
-	inline bool equals(const char *str) const { return (compare(str) == 0); }
-
-	inline char char_at(u32 index) const { return get_buffer()[index]; }
-
-	inline int index_of_char(char c) const {
-		char *f = strchr(get_buffer(), c);
-		if(f == nullptr) return -1;
-		return (int)(f - get_buffer());
-	}
-
-	inline int index_of_string(const char *c) { 
-		char *f = strstr(get_buffer(), c);
-		if(f == nullptr) return -1;
-		return (int)(f - get_buffer());
-	}
-
-public:
-	const char *c_str() const { return get_buffer(); }
-	virtual u32 get_size() const = 0;
-
-private:
-	virtual char *get_buffer() const = 0;
-	virtual void resize(u32 size) = 0;
-};
-*/
-
 class ShortString;
 
 class String { // : public ImplString {
@@ -112,21 +72,11 @@ public:
 	ShortString(const ShortString &string) = default;
 	~ShortString() = default;
 
-	constexpr void operator =(const char *str) {
-		strcpy(m_buffer, str);
-	}
-
-	ShortString substring(int a, int b) const;
-
 	u32 get_size() const { return strlen(m_buffer); }
 	const char *c_str() const { return m_buffer; }
 
-	ShortString short_substring(int a, int b) const;
-
 	inline u32 compare(const char *str) const { return strcmp(m_buffer, str); }
 	inline bool equals(const char *str) const { return (compare(str) == 0); }
-
-	inline char char_at(u32 index) const { return m_buffer[index]; }
 
 	inline int index_of_char(char c) const {
 		const char *f = strchr(&m_buffer[0], c);
@@ -140,7 +90,16 @@ public:
 		return (int)(f - m_buffer);
 	}
 
-	 u64 hash() const;
+	ShortString short_substring(int a, int b) const;
+	ShortString substring(int a, int b) const;
+
+	inline char char_at(u32 index) const { return m_buffer[index]; }
+
+	u64 hash() const;
+
+	constexpr void operator =(const char *str) {
+		strcpy(m_buffer, str);
+	}
 
 public:
 	ShortString &append(const char *str);

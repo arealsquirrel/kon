@@ -1,18 +1,16 @@
 
-#include "kon/container/hashmap.hpp"
-#include "kon/container/set.hpp"
-#include "kon/container/string.hpp"
-#include "kon/core/variant.hpp"
 #include "kon/debug/log.hpp"
+#include "kon/math/transformations.hpp"
+#include "kon/math/vector3.hpp"
+#include "kon/math/vector4.hpp"
 #include <benchmark/benchmark.h>
 #include <cstdlib>
-#include <iostream>
-#include <map>
-#include <string>
 #include <kon/core/allocator.hpp>
-#include <unordered_map>
+#include <kon/math/matrix_operations.hpp>
 
 using namespace kon;
+
+/*
 
 class TestClass {
 public:
@@ -192,6 +190,7 @@ struct FieldData {
 	u32 offset;
 };
 
+
 BENCHMARK(BENCHMARK_setLookup);
 BENCHMARK(BENCHMARK_stdSetLookup);
 BENCHMARK(BENCHMARK_set);
@@ -200,4 +199,20 @@ BENCHMARK(BENCHMARK_hashmap);
 BENCHMARK(BENCHMARK_stdhashmap);
 BENCHMARK(BENCHMARK_mallocAllocator);
 BENCHMARK(BENCHMARK_freeListAllocator);
+*/
+
+static void BENCHMARK_projection(benchmark::State &state) {
+	Vector4 model;
+	for(auto _ : state) {
+		Vector3 point{1,5,3};
+		model = matrix_multiply_vec(trfm_translation(Vector3{3,2,2}), {point.x, point.y, point.z, 1});
+		model = matrix_multiply_vec(trfm_scale(Vector3{2,1,1}), model);
+		model = matrix_multiply_vec(trfm_rotate_z(rand()), model);
+		model = matrix_multiply_vec(trfm_orthographic(0.01, 100.0f, -10.0f, 10.0f, 10.0f, -10.0f), model);
+	}
+
+	KN_TRACE("{} {} {} {}", model.x, model.y, model.z, model.w);
+}
+
+BENCHMARK(BENCHMARK_projection);
 

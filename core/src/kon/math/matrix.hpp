@@ -16,6 +16,7 @@ namespace kon {
  */
 template<u8 xSize, u8 ySize, typename Type>
 class Matrix {
+public:
 };
 
 template<u8 xSize, u8 ySize, typename Type>
@@ -27,28 +28,6 @@ void log_matrix(const Matrix<xSize, ySize, Type> &matrix) {
 		std::cout << std::endl;
 	}
 }
-
-/*
- * multiplies two matricies together
- */
-template<class M>
-M matrix_multiply(const M &a, const M &b);
-
-// template<u8 xSize, u8 ySize, typename Type>
-Vector<4,float> matrix_multiply_vec(const Matrix<4,4,float> &a, const Vector<4, float> &b);
-
-/*
- * returns the identity matrix of matrix type M
- */
-template<class M>
-M matrix_identity();
-
-/*
- * calcalates the gausian norm of a matrix
- */
-template<class M>
-float matrix_norm(const M &matrix);
-
 
 
 // ----------- TO BE IMPLEMENTED ----------- //

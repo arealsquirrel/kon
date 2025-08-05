@@ -94,14 +94,14 @@ TEST(Container, ArrayList) {
 
 	ArrayList<foo> newArray(array);
 	newArray.add(foo(1));
-	newArray.remove();
+	newArray.erase(newArray.get_count()-1);
 	newArray.add(foo(3));
 	newArray[0].a = 4;
 
 	EXPECT_EQ(array[0].a, 5);
 	EXPECT_EQ(array.get_count(), 3);
-	EXPECT_EQ(array.get_size(), 3);
-	EXPECT_EQ(newArray.get_size(), 4);
+	EXPECT_EQ(array.get_capacity(), 3);
+	EXPECT_EQ(newArray.get_capacity(), 4);
 	EXPECT_EQ(newArray[0].a, 4);
 	EXPECT_EQ(newArray.get_count(), 4);
 
@@ -122,7 +122,7 @@ TEST(Container, Hashmap) {
 	map.add({2, String("two", &fa)});
 	map.add({3, String("three", &fa)});
 	map.add({4, String("four", &fa)});
-	map.remove(3);
+	map.erase(3);
 	map.add({5, String("five", &fa)});
 
 	EXPECT_EQ(map.has_key(3), false);
@@ -158,7 +158,7 @@ TEST(Container, Set) {
 
 	set.add({4, "four"});
 	
-	set.remove(3);
+	set.erase(3);
 	set.add({5, "two"});
 
 	EXPECT_EQ(set.has_key(3), false);

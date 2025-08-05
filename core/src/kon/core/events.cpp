@@ -12,7 +12,7 @@ EventListener::EventListener(Object *obj)
 	m_bus(obj->get_engine()->get_event_bus()) {}
 
 EventListener::~EventListener() {
-	m_attachedEvents.for_each([&](UUID id, u32){
+	m_attachedEvents.for_each([&](UUID id){
 		m_bus.destroy_callback(id, m_attached->get_instance_id());
 	});
 }

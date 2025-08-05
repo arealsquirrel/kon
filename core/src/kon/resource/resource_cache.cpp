@@ -1,6 +1,7 @@
 
 #include "resource_cache.hpp"
-#include "kon/core/assert.hpp"
+#include "kon/container/iterate.hpp"
+#include "kon/core/directory.hpp"
 #include "kon/debug/instrumentation.hpp"
 #include "kon/debug/log.hpp"
 #include "kon/resource/resource.hpp"
@@ -96,43 +97,21 @@ void ResourceCache::add_resource_pack(ShortString name) {
 	// ------------ REGISTER TEXTURES ------------
 	ArrayList<Directory> dirs(m_allocator, 30); // prefire a cool 30 elements
 	platform::iterate_directory(m_allocator, (pack->get_path() + pack->get_textures_path()).c_str(), dirs);
-	dirs.for_each([&](Directory &dir, u32){
-		if(dir.get_stat().directory) return;
-	
-		if(dir.get_valid() == false) {
-			KN_CORE_WARN("path {} is invalid", dir.c_str());
-		}
-
+	dirs.view(views::files, [&](Directory &dir){
 		add_resource<ResourceImage>(dir, dir.get_file_name(), pack->get_instance_id());
 	});
 	dirs.reset();
-	dirs.resize(30);
 	
 	// ------------ REGISTER MODELS ------------
 	platform::iterate_directory(m_allocator, (pack->get_path() + pack->get_models_path()).c_str(), dirs);
-	dirs.for_each([&](Directory &dir, u32){
-		if(dir.get_stat().directory) return;
-	
-		if(dir.get_valid() == false) {
-			KN_CORE_WARN("path {} is invalid", dir.c_str());
-		}
-
+	dirs.view(views::files, [&](Directory &dir){
 		add_resource<ResourceModel>(dir, dir.get_file_name(), pack->get_instance_id());
 	});
-
 	dirs.reset();
-	dirs.resize(30);
-	
 
 	// ------------ REGISTER SHADERS ------------
 	platform::iterate_directory(m_allocator, (pack->get_path() + pack->get_shaders_path()).c_str(), dirs);
-	dirs.for_each([&](Directory &dir, u32){
-		if(dir.get_stat().directory) return;
-	
-		if(dir.get_valid() == false) {
-			KN_CORE_WARN("path {} is invalid", dir.c_str());
-		}
-
+	dirs.view(views::files, [&](Directory &dir){
 		add_resource<ResourceShader>(dir, dir.get_file_name(), pack->get_instance_id());
 	});
 }

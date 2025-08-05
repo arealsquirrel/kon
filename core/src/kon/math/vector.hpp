@@ -1,9 +1,6 @@
 #ifndef KN_VECTOR_HPP
 #define KN_VECTOR_HPP
 
-#include "kon/core/assert.hpp"
-#include "kon/core/util.hpp"
-#include <functional>
 #include <kon/core/core.hpp>
 
 namespace kon {
@@ -22,24 +19,6 @@ struct Vector {
 public:
 	Type vec[size];
 };
-
-template<class V>
-u64 hash_vector(V v);
-
-/*
- * returns the norm or the magnitude of the vector
- * the p value is always 2
- */
-template<class V>
-float vector_norm(V vector);
-
-template<class V>
-V vector_add(V va, V vb);
-
-template<class V>
-float vector_dot(V va, V vb);
-
-Vector<3,float> vector_cross(Vector<3,float> va, Vector<3,float> vb);
 
 }
 
