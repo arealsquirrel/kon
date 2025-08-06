@@ -12,7 +12,7 @@
 namespace kon {
 
 VulkanContext::VulkanContext(Engine *engine) 
-	: Object(engine) {}
+	: Object(engine), m_swapchain(engine->get_allocator_dynamic(), this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -23,9 +23,12 @@ void VulkanContext::init_vulkan() {
 	create_surface();
 	select_physical_device();
 	create_device();
+	m_swapchain.create(0,0);
 }
 
 void VulkanContext::clean_vulkan() {
+	m_swapchain.destroy();
+
 	vkDestroyDevice(m_device, nullptr);
 
 	if(KN_ENABLE_VALIDATION) {
@@ -177,10 +180,6 @@ void VulkanContext::create_device() {
 
 	KN_INFO("Logical Device Created.");
 	KN_INFO("{} with {} samples", m_deviceProperties.deviceName, (u32)m_msaaSamples);
-}
-
-void VulkanContext::create_swapchain() {
-	KN_INFO("creating swapchain");
 }
 
 }

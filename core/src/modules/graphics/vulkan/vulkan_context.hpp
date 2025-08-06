@@ -3,6 +3,7 @@
 
 #include "kon/core/object.hpp"
 #include "kon/engine/engine.hpp"
+#include "modules/graphics/vulkan/vulkan_swapchain.hpp"
 #include <kon/debug/log.hpp>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
@@ -29,13 +30,17 @@ public:
 	// cleans all the vulkan things
 	void clean_vulkan();
 
+public:
+	inline VkDevice get_device() const { return m_device; }
+	inline VkSurfaceKHR get_surface() const { return m_surface; }
+	inline VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
+
 private:
 	void create_instance();
 	void create_debug_utils();
 	void create_surface();
 	void select_physical_device();
 	void create_device();
-	void create_swapchain();
 
 private:
 	VkInstance m_instance;
@@ -47,6 +52,8 @@ private:
 
 	VkQueue m_graphicsQueue;
 	VkQueue m_presentQueue;
+
+	VulkanSwapchain m_swapchain;
 
 	VkSampleCountFlagBits m_msaaSamples;
 };

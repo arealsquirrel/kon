@@ -2,6 +2,7 @@
 #define KN_VULKAN_UTIL_HPP
 
 #include "kon/container/array.hpp"
+#include "kon/container/arraylist.hpp"
 #include "kon/core/allocator.hpp"
 #include "kon/debug/log.hpp"
 #include <optional>
@@ -32,7 +33,8 @@ const Array<const char*, 5> device_extentions = {
 
 struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
-	
+	Array<VkPresentModeKHR, 8> presentModes;
+	Array<VkSurfaceFormatKHR, 8> formats;
 };
 
 struct QueueFamilyIndices {
