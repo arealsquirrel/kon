@@ -90,6 +90,11 @@ public:
 		return *e;
 	}
 
+	// please only call this function if you know what you are doing.
+	// this is intened for vulkan functions that use this container to
+	// get a VLA and then run the for each loops on it
+	void set_count(u32 count) { m_count = count; }
+
 	/*
 	 * uses the copy constructor when copying the arrays
 	 * size must be greater than the current size

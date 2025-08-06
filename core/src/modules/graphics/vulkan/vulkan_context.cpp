@@ -12,7 +12,9 @@
 namespace kon {
 
 VulkanContext::VulkanContext(Engine *engine) 
-	: Object(engine) {}
+	: Object(engine),
+	m_swapchain(engine->get_allocator_dynamic(), this),
+	m_commandPool(engine->get_allocator_dynamic(), this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -23,9 +25,21 @@ void VulkanContext::init_vulkan() {
 	create_surface();
 	select_physical_device();
 	create_device();
+	m_swapchain.create(500,500);
+	create_frames();
 }
 
 void VulkanContext::clean_vulkan() {
+	vkDeviceWaitIdle(m_device);
+
+	for (u32 i = 0; i < FRAME_OVERLAP; i++) {
+		vkDestroySemaphore(m_device, m_frames[i].acquireSemaphore, nullptr);
+		vkDestroyFence(m_device, m_frames[i].presentFence, nullptr);
+	}
+	
+	m_commandPool.destroy();
+	m_swapchain.destroy();
+
 	vkDestroyDevice(m_device, nullptr);
 
 	if(KN_ENABLE_VALIDATION) {
@@ -46,8 +60,9 @@ void VulkanContext::create_instance() {
     const char** glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 	ArrayList<const char *> extensions(m_engine->get_allocator_frame(), glfwExtensionCount+1);
-	for(u32 i = 0; i < glfwExtensionCount; i++)
+	for(u32 i = 0; i < glfwExtensionCount; i++) {
 		extensions.add(glfwExtensions[i]);
+	}
 
 	if (KN_ENABLE_VALIDATION) {
         extensions.add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -64,7 +79,7 @@ void VulkanContext::create_instance() {
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensionCount+1);
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensionCount+(int)KN_ENABLE_VALIDATION);
 	createInfo.ppEnabledExtensionNames = extensions.get_buffer();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
@@ -152,14 +167,23 @@ void VulkanContext::create_device() {
     	queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures{};
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	VkPhysicalDeviceSynchronization2Features sync2 {};
+	sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+	sync2.synchronization2 = true;
+
+	VkPhysicalDeviceFeatures2 deviceFeatures {};
+	deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	deviceFeatures.pNext = &sync2;
+	deviceFeatures.features.samplerAnisotropy = VK_TRUE;
+
+	vkGetPhysicalDeviceFeatures2(m_physicalDevice, &deviceFeatures);
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.queueCreateInfoCount = static_cast<u32>(queueCreateInfos.size());
-	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.pNext = &deviceFeatures;
+	//createInfo.pEnabledFeatures = &deviceFeatures;
 
 	createInfo.enabledExtensionCount = static_cast<u32>(device_extentions.get_capacity());
 	createInfo.ppEnabledExtensionNames = device_extentions.get_buffer();
@@ -177,10 +201,94 @@ void VulkanContext::create_device() {
 
 	KN_INFO("Logical Device Created.");
 	KN_INFO("{} with {} samples", m_deviceProperties.deviceName, (u32)m_msaaSamples);
+
+	KN_INFO("Creating command pool");
+	m_commandPool.create(indices.graphicsFamily.value(), FRAME_OVERLAP);
 }
 
-void VulkanContext::create_swapchain() {
-	KN_INFO("creating swapchain");
+void VulkanContext::create_frames() {
+	KN_INFO("Creating frames");
+	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
+		VkSemaphoreCreateInfo sInfo = vkutil::semaphore_create_info(0);
+		KN_VULKAN_ERR_CHECK(vkCreateSemaphore(m_device, &sInfo, nullptr, &m_frames[i].acquireSemaphore));
+	
+		VkFenceCreateInfo fInfo = vkutil::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+		KN_VULKAN_ERR_CHECK(vkCreateFence(m_device, &fInfo, nullptr, &m_frames[i].presentFence));
+	}
+}
+
+void VulkanContext::start_frame() {
+	auto &frame = get_framedata();
+
+	KN_VULKAN_ERR_CHECK(vkWaitForFences(m_device, 1, &frame.presentFence, true, 1000000000));
+	KN_VULKAN_ERR_CHECK(vkResetFences(m_device, 1, &frame.presentFence));
+
+	vkAcquireNextImageKHR(m_device, m_swapchain.get_swapchain(),
+			1000000000,
+			frame.acquireSemaphore, nullptr, &frame.swapchainIndex);
+
+	VkCommandBuffer cmd = m_commandPool.get_buffer(m_frameNumber);
+	vkResetCommandBuffer(cmd, 0);
+	VkCommandBufferBeginInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    info.pNext = nullptr;
+    info.pInheritanceInfo = nullptr;
+    info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	vkBeginCommandBuffer(cmd, &info);
+
+	vkutil::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+}
+
+void VulkanContext::end_frame() {
+	auto &frame = get_framedata();
+	vkutil::transition_image(m_commandPool.get_buffer(m_frameNumber), m_swapchain.get_image(frame.swapchainIndex),
+			VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	vkEndCommandBuffer(m_commandPool.get_buffer(m_frameNumber));
+}
+
+void VulkanContext::present() {
+	auto &frame = get_framedata();
+	VkCommandBufferSubmitInfo cmdinfo = vkutil::command_buffer_submit_info(m_commandPool.get_buffer(m_frameNumber));	
+	
+	VkSemaphoreSubmitInfo waitInfo = vkutil::semaphore_submit_info(
+			VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+			frame.acquireSemaphore);
+
+	VkSemaphoreSubmitInfo signalInfo = vkutil::semaphore_submit_info(
+			VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+			m_swapchain.get_semaphore(frame.swapchainIndex));	
+	
+	VkSubmitInfo2 submit = vkutil::submit_info(&cmdinfo,&signalInfo,&waitInfo);	
+
+	//submit command buffer to the queue and execute it.
+	// _renderFence will now block until the graphic commands finish execution
+	KN_VULKAN_ERR_CHECK(vkQueueSubmit2(m_graphicsQueue, 1, &submit, frame.presentFence));
+
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.pNext = nullptr;
+	VkSwapchainKHR swp = m_swapchain.get_swapchain();
+	presentInfo.pSwapchains = &swp;
+	presentInfo.swapchainCount = 1;
+	VkSemaphore smphore = m_swapchain.get_semaphore(frame.swapchainIndex);
+	presentInfo.pWaitSemaphores = &smphore;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pImageIndices = &frame.swapchainIndex;
+
+	KN_VULKAN_ERR_CHECK(vkQueuePresentKHR(m_presentQueue, &presentInfo));
+
+	//increase the number of frames drawn
+	m_frameNumber = (m_frameNumber+1) % FRAME_OVERLAP;
+}
+
+void VulkanContext::draw_clear(Color color) {
+	auto &frame = get_framedata();
+	VkClearColorValue clearValue {{color.r, color.g, color.b, color.a}};
+	VkImageSubresourceRange clearRange = vkutil::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+	vkCmdClearColorImage(m_commandPool.get_buffer(m_frameNumber),
+			m_swapchain.get_image(frame.swapchainIndex),
+			VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
 }
 
 }

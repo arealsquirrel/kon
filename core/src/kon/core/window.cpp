@@ -1,14 +1,16 @@
 
 #include "window.hpp"
+#include "kon/core/events.hpp"
 #include "kon/core/object.hpp"
 #include "kon/debug/log.hpp"
+#include <kon/engine/engine.hpp>
 #include <GLFW/glfw3.h>
 
 namespace kon {
 
 Engine *Window::s_engine = nullptr;
 
-void error_callback(int error, const char* description) {
+void error_callback(int, const char* description) {
 	KN_CORE_ERROR("GLFW ERROR {}", description);
 }
 
@@ -22,12 +24,17 @@ Window::Window(Engine *engine, WindowCreateInfo info)
 		s_engine = engine;
 	}
 
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	m_window = glfwCreateWindow(info.width, info.height, info.name.c_str(), NULL, NULL);
 	if (!m_window) {
 		KN_CORE_ERROR("glfwCreateWindow did uh not do that");
 		return;
 	}
+
+	glfwSetWindowCloseCallback(m_window, [](GLFWwindow*){
+		Window::s_engine->get_event_bus().emit_event<EventEngineExit>();
+	});
 }
 
 Window::~Window() {
@@ -35,6 +42,7 @@ Window::~Window() {
 }
 
 void Window::init_glfw() {
+	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 	if(glfwInit() == GLFW_FALSE) {
 		KN_CORE_ERROR("glfwInit failed :(");
 	}

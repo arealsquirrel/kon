@@ -19,7 +19,11 @@ void GraphicsModule::clean() {
 
 
 void GraphicsModule::update() {
+	m_context.start_frame();
+	m_context.draw_clear({0.8f, 0.5f, 0.0f, 1.0f});
+	m_context.end_frame();
 
+	m_context.present();
 }
 
 }

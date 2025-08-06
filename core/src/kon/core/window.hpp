@@ -28,6 +28,8 @@ public:
 	u32 get_width() const { return m_width; }
 	u32 get_height() const { return m_height; }
 
+	void poll_events() const { glfwPollEvents(); }
+
 public:
 	static void init_glfw();
 
