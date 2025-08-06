@@ -14,7 +14,7 @@ const Array<const char*, 1> validation_layers = {
 	"VK_LAYER_KHRONOS_validation",
 };
 
-const Array<const char*, 5> device_extentions = {
+const Array<const char*, 4> device_extentions = {
 	// lets us use the swapchain
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 
@@ -22,7 +22,7 @@ const Array<const char*, 5> device_extentions = {
 	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 
 	// makes sync not suck
-	VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+	// VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
 
 	// adds “pointers to buffer memory in shaders”.
 	VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
@@ -69,6 +69,23 @@ inline VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 bool is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface, Allocator *allocator);
 
 VkSampleCountFlagBits find_maximum_samples(VkPhysicalDeviceProperties props);
+
+namespace vkutil {
+
+VkFenceCreateInfo fence_create_info(VkFenceCreateFlags flags);
+VkSemaphoreCreateInfo semaphore_create_info(VkSemaphoreCreateFlags flags);
+
+void transition_image(VkCommandBuffer cmd, VkImage image,
+		VkImageLayout currentLayout, VkImageLayout newLayout);
+
+VkImageSubresourceRange image_subresource_range(VkImageAspectFlags aspectMask);
+
+VkSemaphoreSubmitInfo semaphore_submit_info(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
+VkCommandBufferSubmitInfo command_buffer_submit_info(VkCommandBuffer cmd);
+VkSubmitInfo2 submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signalSemaphoreInfo,
+    VkSemaphoreSubmitInfo* waitSemaphoreInfo);
+
+}
 
 }
 

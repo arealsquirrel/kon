@@ -42,6 +42,7 @@ void Engine::init() {
 bool Engine::update() {
 	KN_INSTRUMENT_FUNCTION();
 
+	m_window.poll_events();
 	m_moduleArray.update_modules();
 
 	return m_running;

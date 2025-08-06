@@ -30,7 +30,16 @@ public:
 
 struct Color {
 public:
-	u8 rgba[4];
+	union {
+		struct {
+			float r;
+			float g;
+			float b;
+			float a;
+		};
+
+		float rgba[4] {0,0,0,0};
+	};
 };
 
 template<typename First, typename Second>

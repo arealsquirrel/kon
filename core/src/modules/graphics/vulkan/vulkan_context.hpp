@@ -1,7 +1,10 @@
 #ifndef KN_VULKAN_CONTEXT_HPP
 #define KN_VULKAN_CONTEXT_HPP
 
+#include "kon/container/array.hpp"
+#include "kon/container/arraylist.hpp"
 #include "kon/core/object.hpp"
+#include "kon/core/util.hpp"
 #include "kon/engine/engine.hpp"
 #include "modules/graphics/vulkan/vulkan_cmd.hpp"
 #include "modules/graphics/vulkan/vulkan_swapchain.hpp"
@@ -14,10 +17,6 @@ namespace kon {
 #define KN_ENABLE_VALIDATION true
 
 #define KN_VULKAN_ERR_CHECK(opp) if(opp != VK_SUCCESS) { KN_ERROR("VULKAN ERROR YOUR COOKED"); }
-
-struct VulkanFrameData {
-	VkCommandBuffer cmd;
-};
 
 /*
  * all vulkan objects will contain the vulkan context
@@ -38,11 +37,22 @@ public:
 	// cleans all the vulkan things
 	void clean_vulkan();
 
+	// opens up the command buffer for drawing
+	void start_frame();
+
+	// closes the command buffer
+	void end_frame();
+
+	// calls vkpresent and vkwhateverthefuck to render all your crap
+	void present();
+
+public:
+	void draw_clear(Color color);
+
 public:
 	inline VkDevice get_device() const { return m_device; }
 	inline VkSurfaceKHR get_surface() const { return m_surface; }
 	inline VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
-	inline VulkanFrameData &get_frame() { return m_frames[m_frameNumber % FRAME_OVERLAP]; }
 
 private:
 	void create_instance();
@@ -68,8 +78,12 @@ private:
 
 	VulkanCommandPool m_commandPool;
 
-	VulkanFrameData m_frames[FRAME_OVERLAP];
+	ArrayList<VkSemaphore> m_acquireSemaphore;
+	ArrayList<VkFence> m_inFlightFence;
+	ArrayList<VkSemaphore> m_submitSemaphores;
+
 	u8 m_frameNumber {0};
+	u32 m_currentSwapchainIndex {0};
 };
 
 }

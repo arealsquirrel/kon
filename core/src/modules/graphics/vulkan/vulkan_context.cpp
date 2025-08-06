@@ -14,7 +14,10 @@ namespace kon {
 VulkanContext::VulkanContext(Engine *engine) 
 	: Object(engine),
 	m_swapchain(engine->get_allocator_dynamic(), this),
-	m_commandPool(engine->get_allocator_dynamic(), this) {}
+	m_commandPool(engine->get_allocator_dynamic(), this),
+	m_acquireSemaphore(engine->get_allocator_dynamic()),
+	m_inFlightFence(engine->get_allocator_dynamic()),
+	m_submitSemaphores(engine->get_allocator_dynamic()) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -30,6 +33,16 @@ void VulkanContext::init_vulkan() {
 }
 
 void VulkanContext::clean_vulkan() {
+	vkDeviceWaitIdle(m_device);
+
+	for (u32 i = 0; i < FRAME_OVERLAP; i++) {
+		vkDestroySemaphore(m_device, m_acquireSemaphore[i], nullptr);
+		vkDestroyFence(m_device, m_inFlightFence[i], nullptr);
+	}
+
+	for(u32 i = 0; i < m_swapchain.get_image_array().get_capacity(); i++)
+		vkDestroySemaphore(m_device, m_submitSemaphores[i], nullptr);
+
 	m_commandPool.destroy();
 	m_swapchain.destroy();
 
@@ -159,14 +172,23 @@ void VulkanContext::create_device() {
     	queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures{};
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	VkPhysicalDeviceSynchronization2Features sync2 {};
+	sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+	sync2.synchronization2 = true;
+
+	VkPhysicalDeviceFeatures2 deviceFeatures {};
+	deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	deviceFeatures.pNext = &sync2;
+	deviceFeatures.features.samplerAnisotropy = VK_TRUE;
+
+	vkGetPhysicalDeviceFeatures2(m_physicalDevice, &deviceFeatures);
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.queueCreateInfoCount = static_cast<u32>(queueCreateInfos.size());
-	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.pNext = &deviceFeatures;
+	//createInfo.pEnabledFeatures = &deviceFeatures;
 
 	createInfo.enabledExtensionCount = static_cast<u32>(device_extentions.get_capacity());
 	createInfo.ppEnabledExtensionNames = device_extentions.get_buffer();
@@ -191,9 +213,96 @@ void VulkanContext::create_device() {
 
 void VulkanContext::create_frames() {
 	KN_INFO("Creating frames");
+	m_acquireSemaphore.resize(m_swapchain.get_image_array().get_capacity());
+	m_inFlightFence.resize(FRAME_OVERLAP);
+	m_submitSemaphores.resize(FRAME_OVERLAP);
+
 	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
-		m_frames[i].cmd = m_commandPool.get_buffer(i);
+		VkSemaphoreCreateInfo sInfo = vkutil::semaphore_create_info(0);
+		KN_VULKAN_ERR_CHECK(vkCreateSemaphore(m_device, &sInfo, nullptr, &m_acquireSemaphore[i]));
+	
+		VkFenceCreateInfo fInfo = vkutil::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+		KN_VULKAN_ERR_CHECK(vkCreateFence(m_device, &fInfo, nullptr, &m_inFlightFence[i]));
 	}
+
+	for(u32 i = 0; i < m_swapchain.get_image_array().get_capacity(); i++) {
+		VkSemaphoreCreateInfo sInfo = vkutil::semaphore_create_info(0);
+		KN_VULKAN_ERR_CHECK(vkCreateSemaphore(m_device, &sInfo, nullptr, &m_submitSemaphores[i]));
+	}
+}
+
+void VulkanContext::start_frame() {
+	KN_VULKAN_ERR_CHECK(vkWaitForFences(m_device, 1, &m_inFlightFence[m_frameNumber], true, 1000000000));
+	KN_VULKAN_ERR_CHECK(vkResetFences(m_device, 1, &m_inFlightFence[m_frameNumber]));
+
+	vkAcquireNextImageKHR(m_device, m_swapchain.get_swapchain(),
+			1000000000,
+			m_acquireSemaphore[m_frameNumber], nullptr, &m_currentSwapchainIndex);
+
+	VkCommandBuffer cmd = m_commandPool.get_buffer(m_frameNumber);
+	vkResetCommandBuffer(cmd, 0);
+	VkCommandBufferBeginInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    info.pNext = nullptr;
+    info.pInheritanceInfo = nullptr;
+    info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	vkBeginCommandBuffer(cmd, &info);
+
+	vkutil::transition_image(cmd, m_swapchain.get_image(m_currentSwapchainIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+}
+
+void VulkanContext::end_frame() {
+	vkutil::transition_image(m_commandPool.get_buffer(m_frameNumber), m_swapchain.get_image(m_currentSwapchainIndex),
+			VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	vkEndCommandBuffer(m_commandPool.get_buffer(m_frameNumber));
+}
+
+void VulkanContext::present() {
+	VkCommandBufferSubmitInfo cmdinfo = vkutil::command_buffer_submit_info(m_commandPool.get_buffer(m_frameNumber));	
+	
+	VkSemaphoreSubmitInfo waitInfo = vkutil::semaphore_submit_info(
+			VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+			m_acquireSemaphore[m_frameNumber]);
+
+	VkSemaphoreSubmitInfo signalInfo = vkutil::semaphore_submit_info(
+			VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+			m_submitSemaphores[m_currentSwapchainIndex]);	
+	
+	VkSubmitInfo2 submit = vkutil::submit_info(&cmdinfo,&signalInfo,&waitInfo);	
+
+	//submit command buffer to the queue and execute it.
+	// _renderFence will now block until the graphic commands finish execution
+	KN_VULKAN_ERR_CHECK(vkQueueSubmit2(m_graphicsQueue, 1, &submit, m_inFlightFence[m_frameNumber]));
+
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.pNext = nullptr;
+	VkSwapchainKHR swp = m_swapchain.get_swapchain();
+	presentInfo.pSwapchains = &swp;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pWaitSemaphores = &m_submitSemaphores[m_currentSwapchainIndex];
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pImageIndices = &m_currentSwapchainIndex;
+
+	KN_VULKAN_ERR_CHECK(vkQueuePresentKHR(m_graphicsQueue, &presentInfo));
+
+	//increase the number of frames drawn
+	m_frameNumber = (m_frameNumber+1) % FRAME_OVERLAP;
+}
+
+void VulkanContext::draw_clear(Color color) {
+	VkClearColorValue clearValue {{color.r, color.g, color.b, color.a}};
+	// float flash = std::abs(std::sin(_frameNumber / 120.f));
+	// clearValue = { { 0.0f, 0.0f, flash, 1.0f } };
+
+	VkImageSubresourceRange clearRange = vkutil::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+
+	//clear image
+	vkCmdClearColorImage(m_commandPool.get_buffer(m_frameNumber),
+			m_swapchain.get_image(m_currentSwapchainIndex),
+			VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+
 }
 
 }

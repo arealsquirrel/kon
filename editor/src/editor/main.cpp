@@ -40,7 +40,6 @@ int main() {
 	KN_INSTRUMENT_NEW_FILE("logs/update.json");
 
 	while(engine.update()) {
-		engine.get_event_bus().emit_event<EventEngineExit>();
 	}
 
 	KN_INSTRUMENT_CLOSE_FILE();
