@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME} ${SRCS} ${HDRS} vendor/implementation.cpp)
 
 target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/src
+	${PROJECT_SOURCE_DIR}/vendor
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -7,10 +7,12 @@
 #include "kon/core/util.hpp"
 #include "kon/engine/engine.hpp"
 #include "modules/graphics/vulkan/vulkan_cmd.hpp"
+#include "modules/graphics/vulkan/vulkan_image.hpp"
 #include "modules/graphics/vulkan/vulkan_swapchain.hpp"
 #include <kon/debug/log.hpp>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
+#include <vk_mem_alloc.h>
 
 namespace kon {
 
@@ -19,7 +21,6 @@ namespace kon {
 #define KN_VULKAN_ERR_CHECK(opp) if(opp != VK_SUCCESS) { KN_ERROR("VULKAN ERROR YOUR COOKED"); }
 
 struct VulkanFrameData {
-	VkCommandBuffer cmd;
 	VkSemaphore acquireSemaphore;
 	VkFence presentFence;
 	u32 swapchainIndex;
@@ -54,6 +55,9 @@ public:
 	void present();
 
 public:
+	void viewport_render_image(u32 width, u32 height);
+
+public:
 	void draw_clear(Color color);
 
 public:
@@ -61,6 +65,7 @@ public:
 	inline VkSurfaceKHR get_surface() const { return m_surface; }
 	inline VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
 	inline VulkanFrameData &get_framedata() { return m_frames[m_frameNumber]; }
+	inline VmaAllocator get_vma_allocator() const { return m_vmaAllocator; }
 
 private:
 	void create_instance();
@@ -68,6 +73,8 @@ private:
 	void create_surface();
 	void select_physical_device();
 	void create_device();
+	void create_allocator();
+	void create_render_image();
 	void create_frames();
 
 private:
@@ -83,9 +90,14 @@ private:
 
 	VulkanSwapchain m_swapchain;
 	VulkanCommandPool m_commandPool;
+	VmaAllocator m_vmaAllocator;
 	VkSampleCountFlagBits m_msaaSamples;
 
 	Array<VulkanFrameData, FRAME_OVERLAP> m_frames;
+
+	u32 m_renderImageWidth;
+	u32 m_renderImageHeight;
+	VulkanImage m_renderImage;
 
 	u8 m_frameNumber {0};
 };

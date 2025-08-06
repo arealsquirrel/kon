@@ -1,6 +1,7 @@
 
 #include "vulkan_context.hpp"
 #include "kon/core/object.hpp"
+#include "modules/graphics/vulkan/vulkan_image.hpp"
 #include "modules/graphics/vulkan/vulkan_util.hpp"
 #include <kon/debug/log.hpp>
 #include <set>
@@ -14,7 +15,8 @@ namespace kon {
 VulkanContext::VulkanContext(Engine *engine) 
 	: Object(engine),
 	m_swapchain(engine->get_allocator_dynamic(), this),
-	m_commandPool(engine->get_allocator_dynamic(), this) {}
+	m_commandPool(engine->get_allocator_dynamic(), this),
+	m_renderImage(this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -25,7 +27,11 @@ void VulkanContext::init_vulkan() {
 	create_surface();
 	select_physical_device();
 	create_device();
+	create_allocator();
 	m_swapchain.create(500,500);
+	m_renderImageWidth = m_swapchain.get_extent().width;
+	m_renderImageHeight = m_swapchain.get_extent().height;
+	create_render_image();
 	create_frames();
 }
 
@@ -37,8 +43,11 @@ void VulkanContext::clean_vulkan() {
 		vkDestroyFence(m_device, m_frames[i].presentFence, nullptr);
 	}
 	
+	m_renderImage.destroy();
 	m_commandPool.destroy();
 	m_swapchain.destroy();
+
+	vmaDestroyAllocator(m_vmaAllocator);
 
 	vkDestroyDevice(m_device, nullptr);
 
@@ -167,9 +176,14 @@ void VulkanContext::create_device() {
     	queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddress {};
+	bufferDeviceAddress.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+	bufferDeviceAddress.bufferDeviceAddress = VK_TRUE;
+
 	VkPhysicalDeviceSynchronization2Features sync2 {};
 	sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
 	sync2.synchronization2 = true;
+	sync2.pNext = &bufferDeviceAddress;
 
 	VkPhysicalDeviceFeatures2 deviceFeatures {};
 	deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -206,6 +220,51 @@ void VulkanContext::create_device() {
 	m_commandPool.create(indices.graphicsFamily.value(), FRAME_OVERLAP);
 }
 
+void VulkanContext::create_allocator() {
+	VmaAllocatorCreateInfo createinfo {};
+	createinfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+	createinfo.physicalDevice = m_physicalDevice;
+	createinfo.device = m_device;
+	createinfo.instance = m_instance;
+	createinfo.vulkanApiVersion = VK_API_VERSION_1_3;
+
+	KN_VULKAN_ERR_CHECK(vmaCreateAllocator(&createinfo, &m_vmaAllocator));
+}
+
+void VulkanContext::create_render_image() {
+	VkExtent3D drawImageExtent = {
+		m_renderImageWidth,
+		m_renderImageHeight,
+		1
+	};
+
+	VkImageUsageFlags drawImageUsages{};
+	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	m_renderImage.create(drawImageExtent,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_IMAGE_TILING_OPTIMAL,
+			drawImageUsages);
+}
+
+void VulkanContext::viewport_render_image(u32 width, u32 height) {
+	if(m_renderImageHeight == height || m_renderImageWidth == width) {
+		KN_TRACE("we have to remake the render image :(");
+
+		m_renderImageWidth = width;
+		m_renderImageHeight = height;
+
+		m_renderImage.destroy();
+		create_render_image();
+	} else {
+		m_renderImageWidth = width;
+		m_renderImageHeight = height;
+	}
+}
+
 void VulkanContext::create_frames() {
 	KN_INFO("Creating frames");
 	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
@@ -236,13 +295,27 @@ void VulkanContext::start_frame() {
     info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	vkBeginCommandBuffer(cmd, &info);
 
-	vkutil::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+	// _drawExtent.width = _drawImage.imageExtent.width;
+	// _drawExtent.height = _drawImage.imageExtent.height;
+
+
+	// transition our main draw image into general layout so we can write into it
+	// we will overwrite it all so we dont care about what was the older layout
+	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
 }
 
 void VulkanContext::end_frame() {
 	auto &frame = get_framedata();
-	vkutil::transition_image(m_commandPool.get_buffer(m_frameNumber), m_swapchain.get_image(frame.swapchainIndex),
-			VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	VkCommandBuffer cmd = m_commandPool.get_buffer(m_frameNumber);
+
+	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	VkExtent2D renderImageExtent = { m_renderImage.get_extent().width, m_renderImage.get_extent().height };
+	VulkanImage::copy_image_to_image(cmd, m_renderImage.get_handle(), m_swapchain.get_image(frame.swapchainIndex), renderImageExtent, m_swapchain.get_extent());
+	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	vkEndCommandBuffer(m_commandPool.get_buffer(m_frameNumber));
 }
@@ -283,11 +356,10 @@ void VulkanContext::present() {
 }
 
 void VulkanContext::draw_clear(Color color) {
-	auto &frame = get_framedata();
 	VkClearColorValue clearValue {{color.r, color.g, color.b, color.a}};
-	VkImageSubresourceRange clearRange = vkutil::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+	VkImageSubresourceRange clearRange = VulkanImage::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCmdClearColorImage(m_commandPool.get_buffer(m_frameNumber),
-			m_swapchain.get_image(frame.swapchainIndex),
+			m_renderImage.get_handle(),
 			VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
 }
 
