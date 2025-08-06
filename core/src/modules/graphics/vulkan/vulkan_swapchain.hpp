@@ -16,6 +16,19 @@ public:
 	void create(u32 width, u32 height);
 	void destroy();
 
+public:
+	VkSwapchainKHR get_swapchain() const { return m_swapchain; }
+
+	const ArrayList<VkImage> &get_image_array() const { return m_images; }
+	VkImage get_image(u32 index) const { return m_images[index]; }
+
+	const ArrayList<VkImageView> &get_view_array() const { return m_views; }
+	VkImageView get_view(u32 index) const { return m_views[index]; }
+
+	VkExtent2D get_extent() const { return m_extent; }
+	VkPresentModeKHR get_present_mode() const { return m_presentMode; }
+	VkSurfaceFormatKHR get_format() const { return m_format; }
+
 private:
 	Allocator *m_allocator;
 	VulkanContext *m_context;

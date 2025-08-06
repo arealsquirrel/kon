@@ -12,7 +12,9 @@
 namespace kon {
 
 VulkanContext::VulkanContext(Engine *engine) 
-	: Object(engine), m_swapchain(engine->get_allocator_dynamic(), this) {}
+	: Object(engine),
+	m_swapchain(engine->get_allocator_dynamic(), this),
+	m_commandPool(engine->get_allocator_dynamic(), this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -24,9 +26,11 @@ void VulkanContext::init_vulkan() {
 	select_physical_device();
 	create_device();
 	m_swapchain.create(0,0);
+	create_frames();
 }
 
 void VulkanContext::clean_vulkan() {
+	m_commandPool.destroy();
 	m_swapchain.destroy();
 
 	vkDestroyDevice(m_device, nullptr);
@@ -180,6 +184,16 @@ void VulkanContext::create_device() {
 
 	KN_INFO("Logical Device Created.");
 	KN_INFO("{} with {} samples", m_deviceProperties.deviceName, (u32)m_msaaSamples);
+
+	KN_INFO("Creating command pool");
+	m_commandPool.create(indices.graphicsFamily.value(), FRAME_OVERLAP);
+}
+
+void VulkanContext::create_frames() {
+	KN_INFO("Creating frames");
+	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
+		m_frames[i].cmd = m_commandPool.get_buffer(i);
+	}
 }
 
 }
