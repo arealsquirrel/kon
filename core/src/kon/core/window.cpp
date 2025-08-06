@@ -42,6 +42,7 @@ Window::~Window() {
 }
 
 void Window::init_glfw() {
+	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 	if(glfwInit() == GLFW_FALSE) {
 		KN_CORE_ERROR("glfwInit failed :(");
 	}

@@ -18,6 +18,13 @@ namespace kon {
 
 #define KN_VULKAN_ERR_CHECK(opp) if(opp != VK_SUCCESS) { KN_ERROR("VULKAN ERROR YOUR COOKED"); }
 
+struct VulkanFrameData {
+	VkCommandBuffer cmd;
+	VkSemaphore acquireSemaphore;
+	VkFence presentFence;
+	u32 swapchainIndex;
+};
+
 /*
  * all vulkan objects will contain the vulkan context
  */
@@ -53,6 +60,7 @@ public:
 	inline VkDevice get_device() const { return m_device; }
 	inline VkSurfaceKHR get_surface() const { return m_surface; }
 	inline VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
+	inline VulkanFrameData &get_framedata() { return m_frames[m_frameNumber]; }
 
 private:
 	void create_instance();
@@ -74,16 +82,12 @@ private:
 	VkQueue m_presentQueue;
 
 	VulkanSwapchain m_swapchain;
+	VulkanCommandPool m_commandPool;
 	VkSampleCountFlagBits m_msaaSamples;
 
-	VulkanCommandPool m_commandPool;
-
-	ArrayList<VkSemaphore> m_acquireSemaphore;
-	ArrayList<VkFence> m_inFlightFence;
-	ArrayList<VkSemaphore> m_submitSemaphores;
+	Array<VulkanFrameData, FRAME_OVERLAP> m_frames;
 
 	u8 m_frameNumber {0};
-	u32 m_currentSwapchainIndex {0};
 };
 
 }
