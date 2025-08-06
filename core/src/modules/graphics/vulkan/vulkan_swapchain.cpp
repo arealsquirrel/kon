@@ -12,7 +12,7 @@ namespace kon {
 
 VulkanSwapchain::VulkanSwapchain(Allocator *allocator, VulkanContext *context)
 	: m_allocator(allocator), m_context(context),
-	  m_images(allocator), m_views(allocator) {}
+	  m_images(allocator), m_views(allocator), m_submitSemaphores(allocator) {}
 
 VulkanSwapchain::~VulkanSwapchain() = default;
 
@@ -74,7 +74,7 @@ void VulkanSwapchain::create(u32 width, u32 height) {
 	createInfo.imageColorSpace = m_format.colorSpace;
 	createInfo.imageExtent = m_extent;
 	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 	
 	QueueFamilyIndices indices = find_queue_families(device, surface);
@@ -100,9 +100,11 @@ void VulkanSwapchain::create(u32 width, u32 height) {
 	
 	vkGetSwapchainImagesKHR(m_context->get_device(), m_swapchain, &imageCount, nullptr);
 	m_images.resize(imageCount);
+	m_images.set_count(imageCount);
 	vkGetSwapchainImagesKHR(m_context->get_device(), m_swapchain, &imageCount, m_images.get_buffer());
 
 	m_views.resize(imageCount);
+	m_views.set_count(imageCount);
 	for (u32 i = 0; i < m_images.get_capacity(); i++) {
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -122,11 +124,31 @@ void VulkanSwapchain::create(u32 width, u32 height) {
 
 		KN_VULKAN_ERR_CHECK(vkCreateImageView(m_context->get_device(), &createInfo, nullptr, &m_views.get_buffer()[i]));
 	}
+
+	VkSemaphoreCreateInfo semaphoreInfo = {};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphoreInfo.pNext = nullptr;
+	m_submitSemaphores.resize(imageCount);
+	m_submitSemaphores.set_count(imageCount);
+	for (u32 i = 0; i < m_submitSemaphores.get_capacity(); i++) {
+		KN_VULKAN_ERR_CHECK(
+				vkCreateSemaphore(m_context->get_device(), &semaphoreInfo,
+					nullptr, &m_submitSemaphores[i]));
+	}
+}
+
+u32 VulkanSwapchain::aquire_next_image(VkSemaphore s) {
+	u32 swapchainImageIndex {};
+	KN_VULKAN_ERR_CHECK(
+			vkAcquireNextImageKHR(m_context->get_device(),
+				m_swapchain, 1000000000, s, nullptr, &swapchainImageIndex));
+	return swapchainImageIndex;
 }
 
 void VulkanSwapchain::destroy() {
 	for(u32 i = 0; i < m_views.get_capacity(); i++) {
 		vkDestroyImageView(m_context->get_device(), m_views.get(i), nullptr);
+		vkDestroySemaphore(m_context->get_device(), m_submitSemaphores.get(i), nullptr);
 	}
 
 	vkDestroySwapchainKHR(m_context->get_device(), m_swapchain, nullptr);
