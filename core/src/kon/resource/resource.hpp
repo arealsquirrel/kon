@@ -54,8 +54,8 @@ constexpr const char *load_error_to_string(ResourceLoadError error) {
 constexpr const char *load_state_to_string(ResourceLoadState state) {
 	switch(state) {
 		case ResourceLoadState_Unloaded: return "unloaded";
-		case ResourceLoadState_FullyLoaded: return "fully loaded";
-		case ResourceLoadState_Partialy: return "partialy loaded";
+		case ResourceLoadState_FullyLoaded: return "fully";
+		case ResourceLoadState_Partialy: return "partialy";
 	}
 
 	return "";

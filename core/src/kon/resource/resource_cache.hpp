@@ -60,6 +60,9 @@ public:
 		return get_resource(name)->cast<R>();
 	}
 
+public:
+	const HashMap<ShortString, Resource*> &get_resource_map() const { return m_stringToResource; }
+
 private:
 	void insert_resource(Resource *resource, UUID groupID);
 

@@ -17,7 +17,7 @@ public:
 	 * modules fill out in their own classes
 	 */
 	template<class M>
-	static void render_module_debug();
+	static void render_class_debug(M *object);
 };
 
 }
