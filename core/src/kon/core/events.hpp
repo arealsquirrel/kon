@@ -103,6 +103,18 @@ public:
 	~EventEngineExit() = default;
 };
 
+struct EventWindowResize : public Event {
+KN_EVENT
+
+public:
+	EventWindowResize(int w, int h)
+		: width(w), height(h) {}
+	~EventWindowResize() = default;
+
+	int width;
+	int height;
+};
+
 }
 
 #endif

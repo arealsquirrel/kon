@@ -1,11 +1,19 @@
 
 #include "graphics_module.hpp"
+#include "kon/core/events.hpp"
 #include "kon/core/object.hpp"
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 
 namespace kon {
 
 GraphicsModule::GraphicsModule(Engine *engine, Allocator *allocator)
-	: Module(engine, allocator), m_context(engine) {}
+	: Module(engine, allocator), EventListener(this), m_context(engine) {
+
+	subscribe_event<EventWindowResize>([&](EventWindowResize &event){
+		m_context.recreate_swapchain();
+	});
+}
 
 GraphicsModule::~GraphicsModule() = default;
 
@@ -19,6 +27,16 @@ void GraphicsModule::clean() {
 
 
 void GraphicsModule::update() {
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	//some imgui UI to test
+	ImGui::ShowDemoWindow();
+
+	//make imgui calculate internal draw structures
+	ImGui::Render();
+
 	m_context.start_frame();
 	m_context.draw_clear({0.8f, 0.5f, 0.0f, 1.0f});
 	m_context.end_frame();

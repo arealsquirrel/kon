@@ -22,3 +22,22 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	CPMAddPackage("gh:gabime/spdlog@1.15.3")
 	CPMAddPackage("gh:google/googletest@1.17.0")
 endif()
+
+CPMAddPackage(
+  NAME imgui
+  VERSION 1.91.2
+  GITHUB_REPOSITORY ocornut/imgui
+  GIT_TAG v1.92.1-docking
+  DOWNLOAD_ONLY TRUE
+)
+
+# CMakeLists.txt from https://gist.githubusercontent.com/rokups/f771217b2d530d170db5cb1e08e9a8f4
+file(
+  DOWNLOAD
+  "https://gist.githubusercontent.com/rokups/f771217b2d530d170db5cb1e08e9a8f4/raw/4c2c14374ab878ca2f45daabfed4c156468e4e27/CMakeLists.txt"
+  "${imgui_SOURCE_DIR}/CMakeLists.txt"
+  EXPECTED_HASH SHA256=fd62f69364ce13a4f7633a9b50ae6672c466bcc44be60c69c45c0c6e225bb086
+)
+
+add_subdirectory(${imgui_SOURCE_DIR} EXCLUDE_FROM_ALL SYSTEM)
+

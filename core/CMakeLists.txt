@@ -33,6 +33,10 @@ target_link_libraries(${PROJECT_NAME}
 	spdlog
 	glfw
 	vulkan
+
+	imgui
+	imgui-glfw
+	imgui-vulkan
 )
 
 

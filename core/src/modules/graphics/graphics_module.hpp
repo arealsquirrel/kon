@@ -2,12 +2,13 @@
 #define KN_GRAPHICS_MODULE_HPP
 
 #include "kon/core/allocator.hpp"
+#include "kon/core/events.hpp"
 #include "kon/engine/module.hpp"
 #include "modules/graphics/vulkan/vulkan_context.hpp"
 
 namespace kon {
 
-class GraphicsModule : public Module {
+class GraphicsModule : public Module, EventListener {
 public:
 	GraphicsModule(Engine *engine, Allocator *allocator);
 	~GraphicsModule();

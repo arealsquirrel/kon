@@ -2,7 +2,6 @@
 #define KN_VULKAN_CONTEXT_HPP
 
 #include "kon/container/array.hpp"
-#include "kon/container/arraylist.hpp"
 #include "kon/core/object.hpp"
 #include "kon/core/util.hpp"
 #include "kon/engine/engine.hpp"
@@ -56,7 +55,9 @@ public:
 	// calls vkpresent and vkwhateverthefuck to render all your crap
 	void present();
 
+
 public:
+	void recreate_swapchain();
 	void viewport_render_image(u32 width, u32 height);
 
 public:
@@ -70,6 +71,9 @@ public:
 	inline VmaAllocator get_vma_allocator() const { return m_vmaAllocator; }
 	inline DescriptorAllocator &get_descriptor_allocator() { return m_globalDescriptorAllocator; }
 	inline VkImageView get_render_image_view() const { return m_renderImageView.get_handle(); }
+	inline VulkanSwapchain &get_swapchain() { return m_swapchain; }
+	inline VkInstance get_instance() const { return m_instance; }
+	inline VkQueue get_graphics_queue() const { return m_graphicsQueue; }
 
 private:
 	void create_instance();
@@ -106,6 +110,8 @@ private:
 	DescriptorAllocator m_globalDescriptorAllocator;
 
 	VulkanComputePipeline m_computePipeline;
+
+	bool m_resizeRequested {false};
 
 	u8 m_frameNumber {0};
 };

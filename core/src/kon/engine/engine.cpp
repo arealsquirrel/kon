@@ -23,7 +23,7 @@ Engine::Engine(EngineCreateInfo info)
 	  m_testAllocator(&m_persistentMemory),
 	  m_moduleArray(this, reinterpret_cast<Allocator*>(&m_persistentMemoryAllocator)),
 	  m_eventBus(&m_persistentMemoryAllocator),
-	  m_window(this, {"Kon Engine", 500, 500}),
+	  m_window(this, {"Kon Engine", 800, 800}),
 	  m_resourceCache(&m_persistentMemoryAllocator, this) {
 
 
@@ -48,8 +48,8 @@ void Engine::init() {
 bool Engine::update() {
 	KN_INSTRUMENT_FUNCTION();
 
-	m_window.poll_events();
 	m_moduleArray.update_modules();
+	m_window.poll_events();
 
 	return m_running;
 }

@@ -80,6 +80,8 @@ VkCommandBufferSubmitInfo command_buffer_submit_info(VkCommandBuffer cmd);
 VkSubmitInfo2 submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signalSemaphoreInfo,
     VkSemaphoreSubmitInfo* waitSemaphoreInfo);
 
+VkRenderingAttachmentInfo attachment_info(
+    VkImageView view, VkClearValue* clear ,VkImageLayout layout= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 }

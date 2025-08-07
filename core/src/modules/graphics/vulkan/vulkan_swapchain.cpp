@@ -51,7 +51,7 @@ void VulkanSwapchain::create(u32 width, u32 height) {
 
 	m_presentMode = VK_PRESENT_MODE_FIFO_KHR;
 	presentModes.for_each([&](VkPresentModeKHR mode){
-		if(mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+		if(mode == VK_PRESENT_MODE_FIFO_KHR) {
 			m_presentMode = mode;
 		}
 	});

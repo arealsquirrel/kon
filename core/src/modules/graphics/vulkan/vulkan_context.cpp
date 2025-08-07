@@ -4,8 +4,11 @@
 #include "kon/resource/resource_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
+#include "modules/graphics/vulkan/vulkan_imgui.hpp"
 #include "modules/graphics/vulkan/vulkan_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_util.hpp"
+#include <imgui.h>
+#include <imgui_impl_vulkan.h>
 #include <kon/debug/log.hpp>
 #include <set>
 #include <vulkan/vulkan_core.h>
@@ -33,11 +36,15 @@ void VulkanContext::init_vulkan() {
 	select_physical_device();
 	create_device();
 	create_allocator();
-	m_swapchain.create(500,500);
+
+	glfwPollEvents();
+	int width;
+	int height;
+	glfwGetWindowSize(m_engine->get_window().get_handle(), &width, &height);
+	m_swapchain.create(width,height);
 	create_render_image();
 	create_descriptors();
 	create_frames();
-
 
 	auto &cache = m_engine->get_resource_cache();
 	cache.load_resource("renderScreen.comp.spv");
@@ -46,6 +53,8 @@ void VulkanContext::init_vulkan() {
 	shader.create(shaderSrc->get_shader_code(), shaderSrc->get_size());
 	m_computePipeline.create(m_engine->get_allocator_dynamic(), &shader);
 	shader.destroy();
+
+	kon::VulkanImgui::init(this, m_engine->get_window().get_handle());
 }
 
 void VulkanContext::clean_vulkan() {
@@ -56,10 +65,11 @@ void VulkanContext::clean_vulkan() {
 		vkDestroyFence(m_device, m_frames[i].presentFence, nullptr);
 	}
 
+	kon::VulkanImgui::clean();
+
 	m_computePipeline.destroy();
 
 	m_globalDescriptorAllocator.destroy_pool(m_device);
-	// vkDestroyDescriptorSetLayout(m_device, m_drawImageDescriptorLayout, nullptr);
 	
 	m_renderImageView.destroy();
 	m_renderImage.destroy();
@@ -195,8 +205,13 @@ void VulkanContext::create_device() {
     	queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	VkPhysicalDeviceDynamicRenderingFeatures dynamicRendering {};
+	dynamicRendering.dynamicRendering = VK_TRUE;
+	dynamicRendering.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+
 	VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddress {};
 	bufferDeviceAddress.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+	bufferDeviceAddress.pNext = &dynamicRendering;
 	bufferDeviceAddress.bufferDeviceAddress = VK_TRUE;
 
 	VkPhysicalDeviceSynchronization2Features sync2 {};
@@ -272,7 +287,7 @@ void VulkanContext::create_render_image() {
 			m_renderImage.get_format(), VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-void VulkanContext::viewport_render_image(u32 width, u32 height) {
+void VulkanContext::viewport_render_image(u32, u32) {
 	/*
 	if(m_renderImageHeight == height || m_renderImageWidth == width) {
 		KN_TRACE("we have to remake the render image :(");
@@ -289,6 +304,18 @@ void VulkanContext::viewport_render_image(u32 width, u32 height) {
 	*/
 }
 
+void VulkanContext::recreate_swapchain() {
+	KN_TRACE("resize");
+	vkDeviceWaitIdle(m_device);
+	m_swapchain.destroy();
+
+	int w, h;
+	glfwGetFramebufferSize(m_engine->get_window().get_handle(), &w, &h);
+	m_swapchain.create(w, h);
+
+	m_resizeRequested = false;
+}
+
 void VulkanContext::create_frames() {
 	KN_INFO("Creating frames");
 	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
@@ -302,46 +329,40 @@ void VulkanContext::create_frames() {
 
 void VulkanContext::create_descriptors() {
 	m_globalDescriptorAllocator.init_pool(m_engine->get_allocator_dynamic(),
-			m_device, 10, {
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+			m_device, 1000, {
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
+				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 },
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1 },
+				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1 }
 			});
-
-	/*
-	{
-		DescriptorLayoutBuilder builder {{m_engine->get_allocator_dynamic()}};
-		builder.add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-		m_drawImageDescriptorLayout = builder.build(m_device, VK_SHADER_STAGE_COMPUTE_BIT);
-	}
-
-	m_drawImageDescriptors = m_globalDescriptorAllocator.allocate(m_device, m_drawImageDescriptorLayout);	
-
-	VkDescriptorImageInfo imgInfo{};
-	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	imgInfo.imageView = m_renderImageView.get_handle();
-	
-	VkWriteDescriptorSet drawImageWrite = {};
-	drawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	drawImageWrite.pNext = nullptr;
-	
-	drawImageWrite.dstBinding = 0;
-	drawImageWrite.dstSet = m_drawImageDescriptors;
-	drawImageWrite.descriptorCount = 1;
-	drawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	drawImageWrite.pImageInfo = &imgInfo;
-
-	vkUpdateDescriptorSets(m_device, 1, &drawImageWrite, 0, nullptr);
-	*/
 }
 
 void VulkanContext::start_frame() {
 	auto &frame = get_framedata();
 
+	if (m_resizeRequested == true) {
+		recreate_swapchain();
+	}
+
 	KN_VULKAN_ERR_CHECK(vkWaitForFences(m_device, 1, &frame.presentFence, true, 1000000000));
 	KN_VULKAN_ERR_CHECK(vkResetFences(m_device, 1, &frame.presentFence));
 
-	vkAcquireNextImageKHR(m_device, m_swapchain.get_swapchain(),
+	VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain.get_swapchain(),
 			1000000000,
 			frame.acquireSemaphore, nullptr, &frame.swapchainIndex);
+
+	if(result == VK_ERROR_OUT_OF_DATE_KHR) {
+		m_resizeRequested = true;
+		return;
+	}
 
 	VkCommandBuffer cmd = m_commandPool.get_buffer(m_frameNumber);
 	vkResetCommandBuffer(cmd, 0);
@@ -368,10 +389,29 @@ void VulkanContext::end_frame() {
 
 	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
 	VkExtent2D renderImageExtent = { m_renderImage.get_extent().width, m_renderImage.get_extent().height };
 	VulkanImage::copy_image_to_image(cmd, m_renderImage.get_handle(), m_swapchain.get_image(frame.swapchainIndex), renderImageExtent, m_swapchain.get_extent());
-	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+	//draw imgui into the swapchain image
+	VkRenderingAttachmentInfo colorAttachment = vkutil::attachment_info(m_swapchain.get_view(frame.swapchainIndex), nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	VkRect2D renderArea = {};
+	renderArea.extent = {m_swapchain.get_extent()};
+	renderArea.offset = {0,0};
+
+	VkRenderingInfo renderInfo = {};
+	renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+	renderInfo.renderArea = renderArea;
+	renderInfo.colorAttachmentCount = 1;
+	renderInfo.pColorAttachments = &colorAttachment;
+	renderInfo.layerCount = 1;
+	vkCmdBeginRendering(cmd, &renderInfo);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+	vkCmdEndRendering(cmd);
+
+	// set swapchain image layout to Present so we can draw it
+	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	vkEndCommandBuffer(m_commandPool.get_buffer(m_frameNumber));
 }
