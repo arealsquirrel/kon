@@ -97,7 +97,8 @@ void ResourceCache::add_resource_pack(ShortString name) {
 	// ------------ REGISTER TEXTURES ------------
 	ArrayList<Directory> dirs(m_allocator, 30); // prefire a cool 30 elements
 	platform::iterate_directory(m_allocator, (pack->get_path() + pack->get_textures_path()).c_str(), dirs);
-	dirs.view(views::files, [&](Directory &dir){
+	dirs.view(views::files, [&](Directory &dir) {
+		KN_CORE_TRACE("\t {}", dir.get_file_name().c_str());
 		add_resource<ResourceImage>(dir, dir.get_file_name(), pack->get_instance_id());
 	});
 	dirs.reset();
@@ -105,6 +106,7 @@ void ResourceCache::add_resource_pack(ShortString name) {
 	// ------------ REGISTER MODELS ------------
 	platform::iterate_directory(m_allocator, (pack->get_path() + pack->get_models_path()).c_str(), dirs);
 	dirs.view(views::files, [&](Directory &dir){
+		KN_CORE_TRACE("\t {}", dir.get_file_name().c_str());
 		add_resource<ResourceModel>(dir, dir.get_file_name(), pack->get_instance_id());
 	});
 	dirs.reset();
@@ -112,6 +114,7 @@ void ResourceCache::add_resource_pack(ShortString name) {
 	// ------------ REGISTER SHADERS ------------
 	platform::iterate_directory(m_allocator, (pack->get_path() + pack->get_shaders_path()).c_str(), dirs);
 	dirs.view(views::files, [&](Directory &dir){
+		KN_CORE_TRACE("\t {}", dir.get_file_name().c_str());
 		add_resource<ResourceShader>(dir, dir.get_file_name(), pack->get_instance_id());
 	});
 }

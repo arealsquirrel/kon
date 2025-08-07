@@ -7,7 +7,9 @@
 #include "kon/core/util.hpp"
 #include "kon/engine/engine.hpp"
 #include "modules/graphics/vulkan/vulkan_cmd.hpp"
+#include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
+#include "modules/graphics/vulkan/vulkan_pipeline.hpp"
 #include "modules/graphics/vulkan/vulkan_swapchain.hpp"
 #include <kon/debug/log.hpp>
 #include <vulkan/vulkan.h>
@@ -66,6 +68,8 @@ public:
 	inline VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
 	inline VulkanFrameData &get_framedata() { return m_frames[m_frameNumber]; }
 	inline VmaAllocator get_vma_allocator() const { return m_vmaAllocator; }
+	inline DescriptorAllocator &get_descriptor_allocator() { return m_globalDescriptorAllocator; }
+	inline VkImageView get_render_image_view() const { return m_renderImageView.get_handle(); }
 
 private:
 	void create_instance();
@@ -76,6 +80,7 @@ private:
 	void create_allocator();
 	void create_render_image();
 	void create_frames();
+	void create_descriptors();
 
 private:
 	VkInstance m_instance;
@@ -95,9 +100,12 @@ private:
 
 	Array<VulkanFrameData, FRAME_OVERLAP> m_frames;
 
-	u32 m_renderImageWidth;
-	u32 m_renderImageHeight;
 	VulkanImage m_renderImage;
+	VulkanImageView m_renderImageView;
+
+	DescriptorAllocator m_globalDescriptorAllocator;
+
+	VulkanComputePipeline m_computePipeline;
 
 	u8 m_frameNumber {0};
 };

@@ -1,7 +1,10 @@
 
 #include "vulkan_context.hpp"
 #include "kon/core/object.hpp"
+#include "kon/resource/resource_shader.hpp"
+#include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
+#include "modules/graphics/vulkan/vulkan_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_util.hpp"
 #include <kon/debug/log.hpp>
 #include <set>
@@ -16,7 +19,9 @@ VulkanContext::VulkanContext(Engine *engine)
 	: Object(engine),
 	m_swapchain(engine->get_allocator_dynamic(), this),
 	m_commandPool(engine->get_allocator_dynamic(), this),
-	m_renderImage(this) {}
+	m_renderImage(this),
+	m_renderImageView(this),
+	m_computePipeline(this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -29,10 +34,18 @@ void VulkanContext::init_vulkan() {
 	create_device();
 	create_allocator();
 	m_swapchain.create(500,500);
-	m_renderImageWidth = m_swapchain.get_extent().width;
-	m_renderImageHeight = m_swapchain.get_extent().height;
 	create_render_image();
+	create_descriptors();
 	create_frames();
+
+
+	auto &cache = m_engine->get_resource_cache();
+	cache.load_resource("renderScreen.comp.spv");
+	auto *shaderSrc = cache.get_resource<ResourceShader>("renderScreen.comp.spv");
+	VulkanShader shader(this);
+	shader.create(shaderSrc->get_shader_code(), shaderSrc->get_size());
+	m_computePipeline.create(m_engine->get_allocator_dynamic(), &shader);
+	shader.destroy();
 }
 
 void VulkanContext::clean_vulkan() {
@@ -42,7 +55,13 @@ void VulkanContext::clean_vulkan() {
 		vkDestroySemaphore(m_device, m_frames[i].acquireSemaphore, nullptr);
 		vkDestroyFence(m_device, m_frames[i].presentFence, nullptr);
 	}
+
+	m_computePipeline.destroy();
+
+	m_globalDescriptorAllocator.destroy_pool(m_device);
+	// vkDestroyDescriptorSetLayout(m_device, m_drawImageDescriptorLayout, nullptr);
 	
+	m_renderImageView.destroy();
 	m_renderImage.destroy();
 	m_commandPool.destroy();
 	m_swapchain.destroy();
@@ -233,8 +252,8 @@ void VulkanContext::create_allocator() {
 
 void VulkanContext::create_render_image() {
 	VkExtent3D drawImageExtent = {
-		m_renderImageWidth,
-		m_renderImageHeight,
+		m_swapchain.get_extent().width,
+		m_swapchain.get_extent().height,
 		1
 	};
 
@@ -248,9 +267,13 @@ void VulkanContext::create_render_image() {
 			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VK_IMAGE_TILING_OPTIMAL,
 			drawImageUsages);
+
+	m_renderImageView.create(m_renderImage.get_handle(),
+			m_renderImage.get_format(), VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void VulkanContext::viewport_render_image(u32 width, u32 height) {
+	/*
 	if(m_renderImageHeight == height || m_renderImageWidth == width) {
 		KN_TRACE("we have to remake the render image :(");
 
@@ -263,6 +286,7 @@ void VulkanContext::viewport_render_image(u32 width, u32 height) {
 		m_renderImageWidth = width;
 		m_renderImageHeight = height;
 	}
+	*/
 }
 
 void VulkanContext::create_frames() {
@@ -274,6 +298,39 @@ void VulkanContext::create_frames() {
 		VkFenceCreateInfo fInfo = vkutil::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 		KN_VULKAN_ERR_CHECK(vkCreateFence(m_device, &fInfo, nullptr, &m_frames[i].presentFence));
 	}
+}
+
+void VulkanContext::create_descriptors() {
+	m_globalDescriptorAllocator.init_pool(m_engine->get_allocator_dynamic(),
+			m_device, 10, {
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+			});
+
+	/*
+	{
+		DescriptorLayoutBuilder builder {{m_engine->get_allocator_dynamic()}};
+		builder.add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+		m_drawImageDescriptorLayout = builder.build(m_device, VK_SHADER_STAGE_COMPUTE_BIT);
+	}
+
+	m_drawImageDescriptors = m_globalDescriptorAllocator.allocate(m_device, m_drawImageDescriptorLayout);	
+
+	VkDescriptorImageInfo imgInfo{};
+	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imgInfo.imageView = m_renderImageView.get_handle();
+	
+	VkWriteDescriptorSet drawImageWrite = {};
+	drawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	drawImageWrite.pNext = nullptr;
+	
+	drawImageWrite.dstBinding = 0;
+	drawImageWrite.dstSet = m_drawImageDescriptors;
+	drawImageWrite.descriptorCount = 1;
+	drawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	drawImageWrite.pImageInfo = &imgInfo;
+
+	vkUpdateDescriptorSets(m_device, 1, &drawImageWrite, 0, nullptr);
+	*/
 }
 
 void VulkanContext::start_frame() {
@@ -303,7 +360,6 @@ void VulkanContext::start_frame() {
 	// transition our main draw image into general layout so we can write into it
 	// we will overwrite it all so we dont care about what was the older layout
 	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
 }
 
 void VulkanContext::end_frame() {
@@ -355,12 +411,27 @@ void VulkanContext::present() {
 	m_frameNumber = (m_frameNumber+1) % FRAME_OVERLAP;
 }
 
-void VulkanContext::draw_clear(Color color) {
+void VulkanContext::draw_clear(Color) {
+
+	auto cmd = m_commandPool.get_buffer(m_frameNumber);
+	m_computePipeline.bind_pipeline(cmd);
+	m_computePipeline.bind_descriptor_sets(cmd);
+	m_computePipeline.draw(cmd);
+
+	/*
 	VkClearColorValue clearValue {{color.r, color.g, color.b, color.a}};
 	VkImageSubresourceRange clearRange = VulkanImage::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
 	vkCmdClearColorImage(m_commandPool.get_buffer(m_frameNumber),
 			m_renderImage.get_handle(),
-			VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+			VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange)
+	*/
+
+	// bind the gradient drawing compute pipeline
+
+	// bind the descriptor set containing the draw image for the compute pipeline
+	// vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _gradientPipelineLayout, 0, 1, &_drawImageDescriptors, 0, nullptr);
+
+	// execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
 }
 
 }

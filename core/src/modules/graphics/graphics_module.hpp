@@ -16,6 +16,8 @@ public:
 	void clean() override;
 	void update() override;
 
+	VulkanContext *get_graphics_context() { return &m_context; }
+
 private:
 	VulkanContext m_context;
 };

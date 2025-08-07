@@ -16,6 +16,9 @@ void VulkanImage::create(VkExtent3D extent, VkFormat format,
 				VkImageTiling tiling, VkImageUsageFlags usage,
 				uint32_t mipLevels, VkSampleCountFlagBits numSamples) {
 
+	m_format = format;
+	m_imageExtent = extent;
+
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;

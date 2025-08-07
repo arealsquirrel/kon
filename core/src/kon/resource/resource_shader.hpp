@@ -9,6 +9,12 @@
 
 namespace kon {
 
+enum ShaderType {
+	ShaderType_Fragment,
+	ShaderType_Vertex,
+	ShaderType_Compute
+};
+
 class ResourceShader : public Resource {
 KN_OBJECT(ResourceShader, Resource)
 
@@ -23,10 +29,10 @@ public:
 
 public:
 	u32 get_size() const { return m_size; }
-	char *get_shader() const { return m_shader; }
+	const char *get_shader_code() const { return m_code; }
 
 private:
-	char *m_shader;
+	char *m_code;
 	u32 m_size;
 };
 

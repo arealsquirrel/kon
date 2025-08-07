@@ -7,6 +7,7 @@
 #include "kon/debug/instrumentation.hpp"
 #include "kon/debug/log.hpp"
 #include "kon/resource/resource_cache.hpp"
+#include "kon/resource/resource_pack.hpp"
 
 namespace kon {
 
@@ -35,6 +36,11 @@ Engine::~Engine() = default;
 
 void Engine::init() {
 	KN_INSTRUMENT_FUNCTION();
+
+	m_resourceCache.add_resource<ResourcePack>(
+			Directory("../core/resources/kon_primitives/", get_allocator_dynamic()), "kon_primitives");
+	m_resourceCache.load_metadata("kon_primitives");
+	m_resourceCache.add_resource_pack("kon_primitives");
 
 	m_moduleArray.init_modules();
 }

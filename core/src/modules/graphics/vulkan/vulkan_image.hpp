@@ -22,9 +22,10 @@ public:
 	void destroy();
 
 public:
-	VkImage get_handle() { return m_image; }
-	VkExtent3D get_extent() const { return m_imageExtent; }
-	VkImageLayout get_layout() const { return m_layout; }
+	inline VkImage get_handle() const { return m_image; }
+	inline VkExtent3D get_extent() const { return m_imageExtent; }
+	inline VkImageLayout get_layout() const { return m_layout; }
+	inline VkFormat get_format() const { return m_format; }
 
 public:
 	static void transition_image(VkCommandBuffer cmd, VkImage image,
@@ -41,6 +42,7 @@ private:
 	VmaAllocation m_allocation;
 	VkImageLayout m_layout;
 	VkExtent3D m_imageExtent;
+	VkFormat m_format;
 
 	VulkanContext *m_context;
 };
@@ -55,7 +57,7 @@ public:
 	void destroy();
 
 public:
-	VkImageView get_handle() { return m_view; }
+	VkImageView get_handle() const { return m_view; }
 
 private:
 	VkImageView m_view { VK_NULL_HANDLE };
