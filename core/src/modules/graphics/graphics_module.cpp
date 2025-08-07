@@ -2,6 +2,7 @@
 #include "graphics_module.hpp"
 #include "kon/core/events.hpp"
 #include "kon/core/object.hpp"
+#include "kon/debug/debug_imgui.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
@@ -33,6 +34,7 @@ void GraphicsModule::update() {
 
 	//some imgui UI to test
 	ImGui::ShowDemoWindow();
+	DebugImgui::draw_engine_config(m_engine);
 
 	//make imgui calculate internal draw structures
 	ImGui::Render();

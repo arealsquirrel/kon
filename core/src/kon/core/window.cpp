@@ -25,7 +25,6 @@ Window::Window(Engine *engine, WindowCreateInfo info)
 	}
 
 	glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	m_window = glfwCreateWindow(info.width, info.height, info.name.c_str(), NULL, NULL);
 	if (!m_window) {
@@ -48,7 +47,7 @@ Window::~Window() {
 }
 
 void Window::init_glfw() {
-	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+	// glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 	if(glfwInit() == GLFW_FALSE) {
 		KN_CORE_ERROR("glfwInit failed :(");
 	}
