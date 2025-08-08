@@ -3,6 +3,7 @@
 #include "kon/core/events.hpp"
 #include "kon/core/object.hpp"
 #include "kon/debug/debug_imgui.hpp"
+#include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
@@ -44,6 +45,11 @@ void GraphicsModule::update() {
 	m_context.end_frame();
 
 	m_context.present();
+}
+
+void GraphicsModule::render_debug() {
+	ImGui::ColorEdit4("Color 1", &m_context.m_cpsPushConstants.color1.vec[0]);
+	ImGui::ColorEdit4("Color 2", &m_context.m_cpsPushConstants.color2.vec[0]);	
 }
 
 }

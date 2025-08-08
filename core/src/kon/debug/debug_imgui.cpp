@@ -1,15 +1,14 @@
 
 #include "debug_imgui.hpp"
 #include "kon/core/allocator.hpp"
+#include "kon/engine/module.hpp"
 #include "kon/resource/resource.hpp"
 #include "kon/resource/resource_cache.hpp"
 #include <imgui.h>
 
 namespace kon {
 
-
-template<>
-void DebugImgui::render_class_debug(Object *object) {
+void render_engine_debug_object(Object *object) {
 	if(ImGui::TreeNode("Object Info")) {
 		ImGui::Text("[%p] %s", (void*)object, object->get_typeinfo()->name.c_str());
 		ImGui::Text("Type ID: %llu", object->get_typeinfo()->typeID.uuid);
@@ -19,9 +18,18 @@ void DebugImgui::render_class_debug(Object *object) {
 	}
 }
 
-template<>
-void DebugImgui::render_class_debug(ResourceCache *cache) {
-	render_class_debug<Object>(cache->cast<Object>());
+void render_engine_debug_modulearray(ModuleArray *modules) {
+	modules->get_modules().for_each([](Module *module) {
+		if(ImGui::TreeNode(module->get_typeinfo()->name.c_str())) {
+			render_engine_debug_object(module->cast<Object>());
+			module->render_debug();
+			ImGui::TreePop();
+		}
+	});
+}
+
+void render_engine_debug_resourcecache(ResourceCache *cache) {
+	render_engine_debug_object(cache);
 	const auto &map = cache->get_resource_map();
 
 	if (ImGui::BeginTable("ResourceCacheTable", 3,
@@ -84,7 +92,7 @@ static void draw_freelist_allocator(FreeListAllocator *allocator) {
 void DebugImgui::draw_engine_config(Engine *engine) {
 	ImGui::Begin("Engine Control Panel");
 
-	render_class_debug<Object>(engine);
+	render_engine_debug_object(engine);
 
 	if(ImGui::TreeNode("Memory")) {
 		ImGui::TextWrapped("This details the allocators used by the engine. Green means that the node is being used, and red means the node is free.");
@@ -103,7 +111,12 @@ void DebugImgui::draw_engine_config(Engine *engine) {
 	}
 
 	if(ImGui::TreeNode("Resource Cache")) {
-		render_class_debug(&engine->get_resource_cache());
+		render_engine_debug_resourcecache(&engine->get_resource_cache());
+		ImGui::TreePop();
+	}
+
+	if(ImGui::TreeNode("Modules")) {
+		render_engine_debug_modulearray(&engine->get_modules());
 		ImGui::TreePop();
 	}
 

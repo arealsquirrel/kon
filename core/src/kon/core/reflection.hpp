@@ -1,7 +1,6 @@
 #ifndef KN_REFLECTION_HPP
 #define KN_REFLECTION_HPP
 
-#include "kon/container/array.hpp"
 #include "kon/container/arraylist.hpp"
 #include "kon/container/string.hpp"
 #include "kon/core/allocator.hpp"
@@ -19,23 +18,26 @@ enum ReflectedType {
 	ReflectedType_ReflectClass,
 	ReflectedType_int,
 	ReflectedType_float,
+	ReflectedType_vec2,
+	ReflectedType_vec3,
+	ReflectedType_vec4,
+	ReflectedType_color,
 	ReflectedType_void
 };
 
-class ReflectClass;
+struct ReflectClass;
 
 struct ReflectField {
 	ShortString name;
 	u32 offset;
 	ReflectedType type;
 	const ReflectClass* m_type;
+	bool ismutable=false;
 };
 
 struct ReflectFunction {
 	ShortString name;
 };
-
-class ReflectField;
 
 struct ReflectClass {
 	ShortString m_name;
@@ -82,7 +84,7 @@ private:
 public:
 	// ------------ STATIC STUFF ------------ //
 	template<class T>
-	static ReflectField reflect_field_type(ShortString fieldName, u32 offset);
+	static ReflectField reflect_field_type(ShortString fieldName, u32 offset, bool isMutable=false);
 
 	template<class T>
 	static const ReflectClass *reflect_class();
@@ -101,23 +103,34 @@ private:
 
 #define KN_REF_BEGIN_TYPES(...) ArrayList<ReflectField>(&s_allocator, {__VA_ARGS__})
 #define KN_REF_BEGIN_FUNCTIONS(...) ArrayList<ReflectFunction>(&s_allocator, {__VA_ARGS__}),
-#define KN_REF_TYPE(name) reflect_field_type<decltype(T::name)>(#name, offsetof(T, name))
+
+// defines a type to be reflected
+#define KN_REF_TYPE(name, ...) reflect_field_type<decltype(T::name)>(#name, offsetof(T, name), __VA_ARGS__)
+
+// defines a constant type that is reflected but lets other programs know now to 
+// modify this value
+#define KN_REF_TYPE_CONST(name, ...) reflect_field_type<decltype(T::name)>(#name, offsetof(T, name), false)
+
+// lets other programs know that they can modify this value
+#define KN_REF_TYPE_MUT(name) reflect_field_type<decltype(T::name)>(#name, offsetof(T, name), true)
+
 #define KN_REF_FUNCTION(function) ReflectFunction{#function}
 #define KN_REF_NO_FUNCTIONS KN_REF_BEGIN_FUNCTIONS() 
 #define KN_REFLECT(CLASS, ...) \
 template<> \
-const ReflectClass *Reflection::reflect_class<Foo>() { \
-	using T = Foo; \
+const ReflectClass *Reflection::reflect_class<CLASS>() { \
+	using T = CLASS; \
 	static ReflectClass c{#CLASS, __VA_ARGS__}; \
 	return &c; \
 } \
 template<> \
-ReflectField Reflection::reflect_field_type<Foo>(ShortString fieldName, u32 offset) { \
+ReflectField Reflection::reflect_field_type<CLASS>(ShortString fieldName, u32 offset, bool isMutable) { \
 	return ReflectField{ \
 		fieldName, \
 		offset, \
 		ReflectedType_ReflectClass, \
-		reflect_class<CLASS>() \
+		reflect_class<CLASS>(), \
+		isMutable \
 	}; \
 }
 

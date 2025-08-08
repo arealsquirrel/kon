@@ -24,7 +24,7 @@ Window::Window(Engine *engine, WindowCreateInfo info)
 		s_engine = engine;
 	}
 
-	glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	m_window = glfwCreateWindow(info.width, info.height, info.name.c_str(), NULL, NULL);
 	if (!m_window) {

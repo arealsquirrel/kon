@@ -13,8 +13,8 @@ struct Foo {
 
 KN_REFLECT(Foo, 
 KN_REF_BEGIN_TYPES(
-	KN_REF_TYPE(x),
-	KN_REF_TYPE(y)
+	KN_REF_TYPE(x, true),
+	KN_REF_TYPE(y, true)
 ),
 KN_REF_NO_FUNCTIONS
 )

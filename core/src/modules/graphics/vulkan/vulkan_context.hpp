@@ -3,8 +3,10 @@
 
 #include "kon/container/array.hpp"
 #include "kon/core/object.hpp"
+#include "kon/core/reflection.hpp"
 #include "kon/core/util.hpp"
 #include "kon/engine/engine.hpp"
+#include "modules/graphics/vulkan/pipelines/vulkan_compute_screen.hpp"
 #include "modules/graphics/vulkan/vulkan_cmd.hpp"
 #include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
@@ -75,6 +77,10 @@ public:
 	inline VkInstance get_instance() const { return m_instance; }
 	inline VkQueue get_graphics_queue() const { return m_graphicsQueue; }
 
+public:
+	VkCommandBuffer start_singetime_commands();
+	void end_singletime_commands(VkCommandBuffer cmd);
+
 private:
 	void create_instance();
 	void create_debug_utils();
@@ -109,12 +115,28 @@ private:
 
 	DescriptorAllocator m_globalDescriptorAllocator;
 
-	VulkanComputePipeline m_computePipeline;
+	VulkanComputePipelineScreen m_computePipelineScreen;
 
 	bool m_resizeRequested {false};
 
 	u8 m_frameNumber {0};
+
+public:
+	VulkanComputePipelineScreen::PushConstant m_cpsPushConstants;
 };
+
+/*
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+
+KN_REFLECT(VulkanContext,
+KN_REF_BEGIN_TYPES(
+	KN_REF_TYPE(m_cpsPushConstants, true)
+),
+KN_REF_NO_FUNCTIONS);
+
+#pragma GCC diagnostic pop
+*/
 
 }
 

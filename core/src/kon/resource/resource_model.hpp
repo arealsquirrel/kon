@@ -18,6 +18,7 @@ public:
 		Vector3 position;
 		Vector3 color;
 		Vector2 texCoord;
+		Vector3 normal;
 
 		bool operator ==(const Vertex &vertex) const { 
 			return (vertex.texCoord == texCoord && 

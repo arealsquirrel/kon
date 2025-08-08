@@ -16,8 +16,11 @@ public:
 	 * forward declared template that our
 	 * modules fill out in their own classes
 	 */
-	template<class M>
-	static void render_class_debug(M *object);
+	// template<class M>
+	// static void render_class_debug(M *object);
+
+	template<typename T>
+	static void render_reflection();
 };
 
 }

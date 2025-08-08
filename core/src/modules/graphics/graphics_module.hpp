@@ -3,12 +3,15 @@
 
 #include "kon/core/allocator.hpp"
 #include "kon/core/events.hpp"
+#include "kon/core/object.hpp"
 #include "kon/engine/module.hpp"
 #include "modules/graphics/vulkan/vulkan_context.hpp"
 
 namespace kon {
 
 class GraphicsModule : public Module, EventListener {
+KN_OBJECT(GraphicsModule, Module)
+
 public:
 	GraphicsModule(Engine *engine, Allocator *allocator);
 	~GraphicsModule();
@@ -16,6 +19,8 @@ public:
 	void init() override;
 	void clean() override;
 	void update() override;
+
+	void render_debug() override;
 
 	VulkanContext *get_graphics_context() { return &m_context; }
 

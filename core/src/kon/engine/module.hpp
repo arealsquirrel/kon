@@ -24,6 +24,9 @@ public:
 	virtual void init() = 0;
 	virtual void clean() = 0;
 	virtual void update() = 0;
+
+public:
+	virtual void render_debug() {};
 };
 
 // please dont ever copy this :(
@@ -37,6 +40,8 @@ public:
 	void clean_modules();
 	void update_modules();
 	void reload_modules();
+
+	ArrayList<Module*> &get_modules() { return m_modules; }  
 
 public:
 	template<class T, typename ...Args>

@@ -1,5 +1,6 @@
 
 #include "vulkan_context.hpp"
+#include "kon/core/core.hpp"
 #include "kon/core/object.hpp"
 #include "kon/resource/resource_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_descriptors.hpp"
@@ -24,7 +25,7 @@ VulkanContext::VulkanContext(Engine *engine)
 	m_commandPool(engine->get_allocator_dynamic(), this),
 	m_renderImage(this),
 	m_renderImageView(this),
-	m_computePipeline(this) {}
+	m_computePipelineScreen(this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -51,7 +52,7 @@ void VulkanContext::init_vulkan() {
 	auto *shaderSrc = cache.get_resource<ResourceShader>("renderScreen.comp.spv");
 	VulkanShader shader(this);
 	shader.create(shaderSrc->get_shader_code(), shaderSrc->get_size());
-	m_computePipeline.create(m_engine->get_allocator_dynamic(), &shader);
+	m_computePipelineScreen.create(m_engine->get_allocator_dynamic(), &shader);
 	shader.destroy();
 
 	kon::VulkanImgui::init(this, m_engine->get_window().get_handle());
@@ -67,7 +68,7 @@ void VulkanContext::clean_vulkan() {
 
 	kon::VulkanImgui::clean();
 
-	m_computePipeline.destroy();
+	m_computePipelineScreen.destroy();
 
 	m_globalDescriptorAllocator.destroy_pool(m_device);
 	
@@ -345,6 +346,39 @@ void VulkanContext::create_descriptors() {
 			});
 }
 
+VkCommandBuffer VulkanContext::start_singetime_commands() {
+	VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = m_commandPool.get_pool();
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(m_device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    return commandBuffer;
+}
+
+void VulkanContext::end_singletime_commands(VkCommandBuffer cmd) {
+	vkEndCommandBuffer(cmd);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &cmd;
+
+    vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(m_graphicsQueue);
+
+    vkFreeCommandBuffers(m_device, m_commandPool.get_pool(), 1, &cmd);
+}
+
 void VulkanContext::start_frame() {
 	auto &frame = get_framedata();
 
@@ -454,10 +488,11 @@ void VulkanContext::present() {
 void VulkanContext::draw_clear(Color) {
 
 	auto cmd = m_commandPool.get_buffer(m_frameNumber);
-	m_computePipeline.bind_pipeline(cmd);
-	m_computePipeline.bind_descriptor_sets(cmd);
+	m_computePipelineScreen.bind_pipeline(cmd);
+	m_computePipelineScreen.bind_descriptor_sets(cmd);
+	m_computePipelineScreen.bind_push_constants(cmd, KN_MEM_POINTER(&m_cpsPushConstants));
 	
-	m_computePipeline.draw(cmd);
+	m_computePipelineScreen.draw(cmd);
 
 	/*
 	VkClearColorValue clearValue {{color.r, color.g, color.b, color.a}};

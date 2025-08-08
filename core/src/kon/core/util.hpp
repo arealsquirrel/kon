@@ -79,7 +79,9 @@ private:
 	T value;
 };
 
-
+template <typename E, E V> constexpr const char *enum_to_string() {
+	return __PRETTY_FUNCTION__;
+}
 
 }
 
