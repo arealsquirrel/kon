@@ -456,6 +456,7 @@ void VulkanContext::draw_clear(Color) {
 	auto cmd = m_commandPool.get_buffer(m_frameNumber);
 	m_computePipeline.bind_pipeline(cmd);
 	m_computePipeline.bind_descriptor_sets(cmd);
+	
 	m_computePipeline.draw(cmd);
 
 	/*
