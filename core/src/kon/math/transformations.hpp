@@ -34,16 +34,16 @@ inline Matrix4x4 trfm_scale(Vector3 delta) {
 
 
 inline Matrix4x4 trfm_rotate_x(float radians) {
-	return Matrix4x4{{{1,0,0,0},
-					 {0, kn_cos(radians), kn_sin(radians), 0},
-					 {0, -kn_sin(radians), kn_cos(radians), 0},
+	return Matrix4x4{{{kn_cos(radians), 0, -kn_sin(radians), 0},
+					 {0, 1, 0, 0},
+					 {kn_sin(radians), 0, kn_cos(radians), 0},
 					 {0,0,0,1}}};
 }
 
 inline Matrix4x4 trfm_rotate_y(float radians) {
-	return Matrix4x4{{{kn_cos(radians), 0, -kn_sin(radians), 0},
-					 {0, 1, 0, 0},
-					 {kn_sin(radians), 0, kn_cos(radians), 0},
+	return Matrix4x4{{{1,0,0,0},
+					 {0, kn_cos(radians), kn_sin(radians), 0},
+					 {0, -kn_sin(radians), kn_cos(radians), 0},
 					 {0,0,0,1}}};
 }
 

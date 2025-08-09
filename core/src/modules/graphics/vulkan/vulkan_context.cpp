@@ -472,14 +472,13 @@ void VulkanContext::start_frame() {
 	VulkanMeshPipeline::PushConstants meshPushConstants;
 	meshPushConstants.vertexBuffer = m_mesh->get_vertex_address();
 	meshPushConstants.renderMode = renderMode;
-	meshPushConstants.worldMatrix = matrix_multiply(trfm_translation(position),
-			trfm_perspective(cameraScale, 1.0f, 0.01f, 100.0f)
-			);
-	// meshPushConstants.worldMatrix = matrix_identity<Matrix4x4>();
-	// meshPushConstants.worldMatrix = trfm_translation({0.0, 0, 1.0});
-		// trfm_scale({0.8, 0.8, 0});
-	
-	// meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, );
+	meshPushConstants.worldMatrix = trfm_scale(scale);
+	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_rotate_x(rotation.x * 0.0174533));
+	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_rotate_y(rotation.y * 0.0174533));
+	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_rotate_z(rotation.z * 0.0174533));
+	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_translation(position));
+	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_perspective(cameraScale, 1.0f, 0.01f, 100.0f));
+
 	m_meshPipeline.bind_push_constants(cmd, KN_MEM_POINTER(&meshPushConstants));
 	m_mesh->bind(cmd);
 	m_mesh->draw(cmd);

@@ -53,6 +53,7 @@ void GraphicsModule::render_debug() {
 
 	ImGui::InputFloat3("Position", &m_context.position.vec[0]);
 	ImGui::InputFloat3("Scale", &m_context.scale.vec[0]);
+	ImGui::InputFloat3("Rotation", &m_context.rotation.vec[0]);
 	ImGui::InputFloat("Camera FOV", &m_context.cameraScale);
 	ImGui::SliderInt("Render Type", &m_context.renderMode, 0, 2);
 }
