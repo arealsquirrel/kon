@@ -40,7 +40,7 @@ void VulkanMeshPipeline::create(Allocator *allocator) {
 	builder.blending();
 	builder.multisample();
 	builder.color_format(m_context->get_renderimage_format());
-	builder.depth_format(VK_FORMAT_UNDEFINED);
+	builder.depth_format(m_context->get_depth_image().get_format(), VK_COMPARE_OP_GREATER_OR_EQUAL, VK_TRUE);
 
 	auto &cache = m_engine->get_resource_cache();
 	cache.load_resource("triangle.vert.spv");

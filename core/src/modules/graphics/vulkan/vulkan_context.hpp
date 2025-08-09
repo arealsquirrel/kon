@@ -81,6 +81,7 @@ public:
 	inline VkInstance get_instance() const { return m_instance; }
 	inline VkFormat get_renderimage_format() const { return m_renderImage.get_format(); }
 	inline VkQueue get_graphics_queue() const { return m_graphicsQueue; }
+	inline VulkanImage get_depth_image() const { return m_depthImage; }
 
 public:
 	VkCommandBuffer start_singetime_commands();
@@ -117,6 +118,8 @@ private:
 
 	VulkanImage m_renderImage;
 	VulkanImageView m_renderImageView;
+	VulkanImage m_depthImage;
+	VulkanImageView m_depthImageView;
 
 	DescriptorAllocator m_globalDescriptorAllocator;
 

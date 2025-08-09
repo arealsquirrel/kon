@@ -30,6 +30,8 @@ VulkanContext::VulkanContext(Engine *engine)
 	m_commandPool(engine->get_allocator_dynamic(), this),
 	m_renderImage(this),
 	m_renderImageView(this),
+	m_depthImage(this),
+	m_depthImageView(this),
 	m_computePipelineScreen(this),
 	m_meshPipeline(engine, this) {}
 
@@ -89,6 +91,8 @@ void VulkanContext::clean_vulkan() {
 	
 	m_renderImageView.destroy();
 	m_renderImage.destroy();
+	m_depthImage.destroy();
+	m_depthImageView.destroy();
 	m_commandPool.destroy();
 	m_swapchain.destroy();
 
@@ -301,6 +305,14 @@ void VulkanContext::create_render_image() {
 
 	m_renderImageView.create(m_renderImage.get_handle(),
 			m_renderImage.get_format(), VK_IMAGE_ASPECT_COLOR_BIT);
+
+	m_depthImage.create(drawImageExtent,
+			VK_FORMAT_D32_SFLOAT,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+	m_depthImageView.create(m_depthImage.get_handle(),
+			m_depthImage.get_format(), VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 void VulkanContext::viewport_render_image(u32, u32) {
@@ -438,7 +450,10 @@ void VulkanContext::start_frame() {
 
 	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
+	VulkanImage::transition_image(cmd, m_depthImage.get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+
 	// render geometry
+	VkRenderingAttachmentInfo depthAttachment = vkutil::depth_attachment_info(m_depthImageView.get_handle(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 	VkRenderingAttachmentInfo colorAttachment = vkutil::attachment_info(m_renderImageView.get_handle(), nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	VkRect2D renderArea = {};
 	renderArea.extent = {m_swapchain.get_extent()};
@@ -449,6 +464,7 @@ void VulkanContext::start_frame() {
 	renderInfo.renderArea = renderArea;
 	renderInfo.colorAttachmentCount = 1;
 	renderInfo.pColorAttachments = &colorAttachment;
+	renderInfo.pDepthAttachment = &depthAttachment;
 	renderInfo.layerCount = 1;
 	vkCmdBeginRendering(cmd, &renderInfo);
 

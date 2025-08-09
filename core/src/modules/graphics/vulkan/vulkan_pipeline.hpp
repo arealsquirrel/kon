@@ -35,7 +35,7 @@ public:
 	void blending();
 	void multisample();
 	void color_format(VkFormat format);
-	void depth_format(VkFormat format);
+	void depth_format(VkFormat format, VkCompareOp op, bool depthWriteEnable);
 
 private:
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly;

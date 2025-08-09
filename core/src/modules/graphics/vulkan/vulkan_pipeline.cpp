@@ -144,11 +144,11 @@ void VulkanGeometryPipelineBuilder::color_format(VkFormat format) {
     renderInfo.pColorAttachmentFormats = &colorAttachmentformat;
 }
 
-void VulkanGeometryPipelineBuilder::depth_format(VkFormat format) {
+void VulkanGeometryPipelineBuilder::depth_format(VkFormat format, VkCompareOp op, bool depthWriteEnable) {
     renderInfo.depthAttachmentFormat = format;
-	depthStencil.depthTestEnable = VK_FALSE;
-    depthStencil.depthWriteEnable = VK_FALSE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_NEVER;
+	depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = depthWriteEnable;
+    depthStencil.depthCompareOp = op;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
     depthStencil.front = {};
