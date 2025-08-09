@@ -1,21 +1,50 @@
 #version 450
+#extension GL_EXT_buffer_reference : require
 
-layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo;
+layout (location = 0) out vec4 outColor;
+layout (location = 1) out vec2 outUV;
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+struct Vertex {
+	vec3 position;
+	float uv_x;
+	vec3 normal;
+	float uv_y;
+	vec4 color;
+}; 
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragTexCoord;
+layout(buffer_reference, std430) readonly buffer VertexBuffer{ 
+	Vertex vertices[];
+};
 
-void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-    fragColor = inColor;
-    fragTexCoord = inTexCoord;
+//push constants block
+layout( push_constant ) uniform constants {
+	mat4 render_matrix;
+	VertexBuffer vertexBuffer;
+	int drawMode;
+} PushConstants;
+
+// drawMode
+// 0 = regular draw
+// 1 = uv coords
+// 2 = normals
+
+void main()  {
+	//load vertex data from device adress
+	Vertex v =  PushConstants.vertexBuffer.vertices[gl_VertexIndex];
+
+	//output data
+	gl_Position = PushConstants.render_matrix * vec4(v.position.xyz, 1.0f);
+
+	if(PushConstants.drawMode == 0) {
+		outColor = v.color;
+	} else if(PushConstants.drawMode == 1) {
+		outColor = vec4(v.uv_x, v.uv_y, 0.0f, 1.0f);
+	} else {
+		outColor = vec4(v.normal, 1.0f);
+	}
+
+	
+	outUV.x = v.uv_x;
+	outUV.y = v.uv_y;
 }
 

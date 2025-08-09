@@ -6,7 +6,9 @@
 #include "kon/core/reflection.hpp"
 #include "kon/core/util.hpp"
 #include "kon/engine/engine.hpp"
-#include "modules/graphics/vulkan/pipelines/vulkan_compute_screen.hpp"
+#include "kon/math/vector3.hpp"
+#include "modules/graphics/vulkan/pipelines/vulkan_compute_screen_pipeline.hpp"
+#include "modules/graphics/vulkan/pipelines/vulkan_mesh_pipeline.hpp"
 #include "modules/graphics/vulkan/vulkan_cmd.hpp"
 #include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
@@ -18,6 +20,8 @@
 #include <vk_mem_alloc.h>
 
 namespace kon {
+
+class VulkanMeshBuffer;
 
 #define KN_ENABLE_VALIDATION true
 
@@ -75,6 +79,7 @@ public:
 	inline VkImageView get_render_image_view() const { return m_renderImageView.get_handle(); }
 	inline VulkanSwapchain &get_swapchain() { return m_swapchain; }
 	inline VkInstance get_instance() const { return m_instance; }
+	inline VkFormat get_renderimage_format() const { return m_renderImage.get_format(); }
 	inline VkQueue get_graphics_queue() const { return m_graphicsQueue; }
 
 public:
@@ -116,6 +121,9 @@ private:
 	DescriptorAllocator m_globalDescriptorAllocator;
 
 	VulkanComputePipelineScreen m_computePipelineScreen;
+	VulkanMeshPipeline m_meshPipeline;
+
+	VulkanMeshBuffer *m_mesh;
 
 	bool m_resizeRequested {false};
 
@@ -123,6 +131,11 @@ private:
 
 public:
 	VulkanComputePipelineScreen::PushConstant m_cpsPushConstants;
+
+	Vector3 position;
+	Vector3 scale {1.0f, 1.0f, 1.0f};
+	float cameraScale {1.22173};
+	int renderMode{0};
 };
 
 /*

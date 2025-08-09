@@ -49,7 +49,12 @@ void GraphicsModule::update() {
 
 void GraphicsModule::render_debug() {
 	ImGui::ColorEdit4("Color 1", &m_context.m_cpsPushConstants.color1.vec[0]);
-	ImGui::ColorEdit4("Color 2", &m_context.m_cpsPushConstants.color2.vec[0]);	
+	ImGui::ColorEdit4("Color 2", &m_context.m_cpsPushConstants.color2.vec[0]);
+
+	ImGui::InputFloat3("Position", &m_context.position.vec[0]);
+	ImGui::InputFloat3("Scale", &m_context.scale.vec[0]);
+	ImGui::InputFloat("Camera FOV", &m_context.cameraScale);
+	ImGui::SliderInt("Render Type", &m_context.renderMode, 0, 2);
 }
 
 }

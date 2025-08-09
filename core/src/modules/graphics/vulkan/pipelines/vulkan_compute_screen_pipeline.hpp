@@ -13,7 +13,7 @@ class VulkanContext;
  * this is the compute pipeline in charge of rendering the
  * framebuffer to the screen
  */
-class VulkanComputePipelineScreen : VulkanRenderPipeline {
+class VulkanComputePipelineScreen : VulkanPipeline {
 public:
 	struct alignas(128) PushConstant {
 		Vector4 color1 {1.0f, 0.0f, 0.0f, 1.0f};

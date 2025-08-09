@@ -1,5 +1,8 @@
 
 #include "vulkan_buffer.hpp"
+#include "kon/core/core.hpp"
+#include "kon/debug/log.hpp"
+#include "modules/graphics/graphics_module.hpp"
 #include "modules/graphics/vulkan/vulkan_context.hpp"
 #include <cstring>
 #include <vulkan/vulkan_core.h>
@@ -7,7 +10,36 @@
 
 namespace kon {
 
-void Buffer::create_buffer(VmaAllocator allocator,
+VulkanBuffer::VulkanBuffer(VulkanContext *context)
+	: m_context(context) {}
+
+VulkanBuffer::~VulkanBuffer() {
+	
+}
+
+void VulkanBuffer::create(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage) {
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.pNext = nullptr;
+	bufferInfo.size = allocSize;
+
+	bufferInfo.usage = usage;
+
+	VmaAllocationCreateInfo vmaallocInfo = {};
+	vmaallocInfo.usage = memoryUsage;
+	vmaallocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+	// allocate the buffer
+	KN_VULKAN_ERR_CHECK(vmaCreateBuffer(m_context->get_vma_allocator(),
+				&bufferInfo, &vmaallocInfo, &m_buffer, &m_allocation, &m_info));
+}
+
+void VulkanBuffer::destroy() {
+	vmaDestroyBuffer(m_context->get_vma_allocator(), m_buffer, m_allocation);
+}
+
+/*
+void VulkanBuffer::create_buffer(VmaAllocator allocator,
 			VkDeviceSize size, VkBufferUsageFlags usage,
 			VkMemoryPropertyFlags properties,
 			VkBuffer &buffer, VmaAllocation &allocation, 
@@ -26,8 +58,9 @@ void Buffer::create_buffer(VmaAllocator allocator,
 	
 	vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
 }
+*/
 
-void Buffer::copy_buffer(VulkanContext *context, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+void VulkanBuffer::copy_buffer(VulkanContext *context, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 	VkCommandBuffer commandBuffer = context->start_singetime_commands();
 
     VkBufferCopy copyRegion{};
@@ -50,7 +83,83 @@ uint32_t find_memory_type(const VulkanContext *context, uint32_t typeFilter, VkM
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
+VulkanMeshBuffer::VulkanMeshBuffer(VulkanContext *context)
+	: m_context(context),
+	  m_vertex(context),
+	  m_index(context) {}
 
+VulkanMeshBuffer::~VulkanMeshBuffer() = default;
+
+void VulkanMeshBuffer::create(
+		const ArrayList<Vertex> &verticies, const ArrayList<u32> &indicies) {
+
+	m_indexCount = indicies.get_count();
+
+	const size_t vertexBufferSize = verticies.get_count() * sizeof(Vertex);
+	const size_t indexBufferSize = indicies.get_count() * sizeof(u32);
+
+	//create vertex buffer
+	m_vertex.create(vertexBufferSize,
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+			VMA_MEMORY_USAGE_GPU_ONLY);
+
+	VkBufferDeviceAddressInfo deviceAdressInfo = {};
+	deviceAdressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+	deviceAdressInfo.buffer = m_vertex.get_buffer();
+	m_vertexBufferAddress = vkGetBufferDeviceAddress(m_context->get_device(), &deviceAdressInfo);
+
+	//create index buffer
+	m_index.create(indexBufferSize,
+					VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+					VMA_MEMORY_USAGE_GPU_ONLY);
+
+	VulkanBuffer staging(m_context);
+	staging.create(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+
+	void* data = staging.get_allocation_info().pMappedData;
+	// KN_TRACE("{} {}", vertexBufferSize, vet);
+	//staging.get_allocation_info().pMappedData;
+	// copy vertex buffer
+	memcpy(data, verticies.get_buffer(), vertexBufferSize);
+	// copy index buffer
+	memcpy((char*)data + vertexBufferSize, indicies.get_buffer(), indexBufferSize);
+
+	// immediate_submit([&](VkCommandBuffer cmd) {
+	VkCommandBuffer cmd = m_context->start_singetime_commands();
+		VkBufferCopy vertexCopy = {};
+		vertexCopy.dstOffset = 0;
+		vertexCopy.srcOffset = 0;
+		vertexCopy.size = vertexBufferSize;
+
+		vkCmdCopyBuffer(cmd, staging.get_buffer(), m_vertex.get_buffer(), 1, &vertexCopy);
+
+		VkBufferCopy indexCopy = {};
+		indexCopy.dstOffset = 0;
+		indexCopy.srcOffset = vertexBufferSize;
+		indexCopy.size = indexBufferSize;
+
+		vkCmdCopyBuffer(cmd, staging.get_buffer(), m_index.get_buffer(), 1, &indexCopy);
+	m_context->end_singletime_commands(cmd);
+	// });
+
+	staging.destroy();
+}
+
+void VulkanMeshBuffer::destroy() {
+	m_vertex.destroy();
+	m_index.destroy();
+}
+
+void VulkanMeshBuffer::bind(VkCommandBuffer cmd) {
+	vkCmdBindIndexBuffer(cmd, m_index.get_buffer(), 0, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanMeshBuffer::draw(VkCommandBuffer cmd) {
+	vkCmdDrawIndexed(cmd, m_indexCount, 1, 0, 0, 0);
+}
+
+
+/*
 AttributeDescription::AttributeDescription(Allocator *allocator,
 		std::initializer_list<VkFormat> attributes) 
 	: m_description(allocator, attributes.size()) {
@@ -169,6 +278,7 @@ void VulkanUniformBuffer::write_memory(void *data) const {
 VulkanUniformBuffer::~VulkanUniformBuffer() {
 	vmaDestroyBuffer(m_context->get_vma_allocator(), m_buffer, m_allocation);	
 }
+*/
 
 }
 

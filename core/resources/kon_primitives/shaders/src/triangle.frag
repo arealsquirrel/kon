@@ -1,13 +1,14 @@
 #version 450
 
-layout(binding = 1) uniform sampler2D texSampler;
+//shader input
+layout (location = 0) in vec4 inColor;
 
-layout(location = 0) in vec3 fragColor;
-layout(location = 1) in vec2 fragTexCoord;
+//output write
+layout (location = 0) out vec4 outFragColor;
 
-layout(location = 0) out vec4 outColor;
-
-void main() {
-    outColor = texture(texSampler, fragTexCoord);
+void main() 
+{
+	//return red
+	outFragColor = vec4(inColor.xyz, 1.0f);
 }
 

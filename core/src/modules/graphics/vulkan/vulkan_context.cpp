@@ -2,12 +2,17 @@
 #include "vulkan_context.hpp"
 #include "kon/core/core.hpp"
 #include "kon/core/object.hpp"
+#include "kon/math/matrix4x4.hpp"
+#include "kon/math/matrix_operations.hpp"
+#include "kon/math/transformations.hpp"
+#include "kon/resource/resource_model.hpp"
 #include "kon/resource/resource_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
 #include "modules/graphics/vulkan/vulkan_imgui.hpp"
 #include "modules/graphics/vulkan/vulkan_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_util.hpp"
+#include <cstring>
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
 #include <kon/debug/log.hpp>
@@ -25,7 +30,8 @@ VulkanContext::VulkanContext(Engine *engine)
 	m_commandPool(engine->get_allocator_dynamic(), this),
 	m_renderImage(this),
 	m_renderImageView(this),
-	m_computePipelineScreen(this) {}
+	m_computePipelineScreen(this),
+	m_meshPipeline(engine, this) {}
 
 VulkanContext::~VulkanContext() {
 
@@ -55,7 +61,15 @@ void VulkanContext::init_vulkan() {
 	m_computePipelineScreen.create(m_engine->get_allocator_dynamic(), &shader);
 	shader.destroy();
 
+	m_meshPipeline.create(m_engine->get_allocator_dynamic());
+
 	kon::VulkanImgui::init(this, m_engine->get_window().get_handle());
+
+	cache.load_resource("Monkey.obj");
+	ResourceModel *model = cache.get_resource<ResourceModel>("Monkey.obj"); //->cast<ResourceModel>();
+	m_mesh = model->get_mesh();
+
+	KN_TRACE("done setting up vulkan");
 }
 
 void VulkanContext::clean_vulkan() {
@@ -69,6 +83,7 @@ void VulkanContext::clean_vulkan() {
 	kon::VulkanImgui::clean();
 
 	m_computePipelineScreen.destroy();
+	m_meshPipeline.destroy();
 
 	m_globalDescriptorAllocator.destroy_pool(m_device);
 	
@@ -415,13 +430,52 @@ void VulkanContext::start_frame() {
 	// transition our main draw image into general layout so we can write into it
 	// we will overwrite it all so we dont care about what was the older layout
 	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+	m_computePipelineScreen.bind_pipeline(cmd);
+	m_computePipelineScreen.bind_descriptor_sets(cmd);
+	m_computePipelineScreen.bind_push_constants(cmd, KN_MEM_POINTER(&m_cpsPushConstants));
+	m_computePipelineScreen.draw(cmd);
+
+	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+	// render geometry
+	VkRenderingAttachmentInfo colorAttachment = vkutil::attachment_info(m_renderImageView.get_handle(), nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	VkRect2D renderArea = {};
+	renderArea.extent = {m_swapchain.get_extent()};
+	renderArea.offset = {0,0};
+
+	VkRenderingInfo renderInfo = {};
+	renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+	renderInfo.renderArea = renderArea;
+	renderInfo.colorAttachmentCount = 1;
+	renderInfo.pColorAttachments = &colorAttachment;
+	renderInfo.layerCount = 1;
+	vkCmdBeginRendering(cmd, &renderInfo);
+
+	m_meshPipeline.bind_pipeline(cmd);
+	VulkanMeshPipeline::PushConstants meshPushConstants;
+	meshPushConstants.vertexBuffer = m_mesh->get_vertex_address();
+	meshPushConstants.renderMode = renderMode;
+	meshPushConstants.worldMatrix = matrix_multiply(trfm_translation(position),
+			trfm_perspective(cameraScale, 1.0f, 0.01f, 100.0f)
+			);
+	// meshPushConstants.worldMatrix = matrix_identity<Matrix4x4>();
+	// meshPushConstants.worldMatrix = trfm_translation({0.0, 0, 1.0});
+		// trfm_scale({0.8, 0.8, 0});
+	
+	// meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, );
+	m_meshPipeline.bind_push_constants(cmd, KN_MEM_POINTER(&meshPushConstants));
+	m_mesh->bind(cmd);
+	m_mesh->draw(cmd);
+
+	vkCmdEndRendering(cmd);
 }
 
 void VulkanContext::end_frame() {
 	auto &frame = get_framedata();
 	VkCommandBuffer cmd = m_commandPool.get_buffer(m_frameNumber);
 
-	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 	VulkanImage::transition_image(cmd, m_swapchain.get_image(frame.swapchainIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	VkExtent2D renderImageExtent = { m_renderImage.get_extent().width, m_renderImage.get_extent().height };
 	VulkanImage::copy_image_to_image(cmd, m_renderImage.get_handle(), m_swapchain.get_image(frame.swapchainIndex), renderImageExtent, m_swapchain.get_extent());
@@ -487,13 +541,7 @@ void VulkanContext::present() {
 
 void VulkanContext::draw_clear(Color) {
 
-	auto cmd = m_commandPool.get_buffer(m_frameNumber);
-	m_computePipelineScreen.bind_pipeline(cmd);
-	m_computePipelineScreen.bind_descriptor_sets(cmd);
-	m_computePipelineScreen.bind_push_constants(cmd, KN_MEM_POINTER(&m_cpsPushConstants));
-	
-	m_computePipelineScreen.draw(cmd);
-
+	// auto cmd = m_commandPool.get_buffer(m_frameNumber);
 	/*
 	VkClearColorValue clearValue {{color.r, color.g, color.b, color.a}};
 	VkImageSubresourceRange clearRange = VulkanImage::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);

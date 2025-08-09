@@ -4,6 +4,7 @@
 #include "kon/math/aproximations.hpp"
 #include "kon/math/matrix4x4.hpp"
 #include "kon/math/vector3.hpp"
+#include <cmath>
 #include <kon/core/core.hpp>
 
 namespace kon {
@@ -13,10 +14,10 @@ namespace kon {
  * vector to yield a translation
  */
 inline Matrix4x4 trfm_translation(Vector3 delta) {
-	return Matrix4x4{{{1.0f,0,0,delta.x},
-					 {0,1.0f,0,delta.y},
-					 {0,0,1.0f,delta.z},
-					 {0,0,0,1.0f}}};
+	return Matrix4x4{{{1.0f, 0, 0, 0.0},
+					  {0, 1.0f, 0, 0},
+					  {0, 0, 1.0f, 0},
+					  {delta.x, delta.y, delta.z, 1.0f}}};
 }
 
 /*
@@ -60,11 +61,13 @@ inline Matrix4x4 trfm_orthographic(float near, float far, float left, float righ
 					 {-(right+left)/(right-left), -(top+bottom)/(top-bottom),-(far+near)/(far-near),1}}};
 }
 
-inline Matrix4x4 trfm_perspective(float near, float far, float right, float top) {
-	return Matrix4x4{{{near/right, 0, 0, 0},
-					  {0, near/top, 0, 0},
-					  {0, 0, -far/(far-near), (-far*near)/(far-near)},
-					  {0,0,-1,0}}};
+inline Matrix4x4 trfm_perspective(float fov, float aspectRatio, float near, float far) {
+	float rad = std::tan(fov / 2);
+
+	return Matrix4x4{{{1 / (aspectRatio * rad), 0, 0, 0},
+					  {0, 1 / (rad), 0, 0},
+					  {0, 0, (far+near)/(far-near), 1},
+					  {0, 0, (-2 * far * near)/(far-near),0}}};
 }
 
 }

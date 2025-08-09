@@ -3,7 +3,9 @@
 
 #include "kon/container/arraylist.hpp"
 #include "kon/core/allocator.hpp"
+// #include "modules/graphics/graphics_module.hpp"
 #include "modules/graphics/vulkan/vulkan_context.hpp"
+#include "modules/graphics/vulkan/vulkan_image.hpp"
 #include <cstddef>
 #include <initializer_list>
 
@@ -18,6 +20,10 @@
 #pragma GCC diagnostic pop
 
 namespace kon {
+
+struct Vertex;
+
+/*
 
 template<typename T>
 constexpr VkVertexInputBindingDescription generate_attrabute_description() {
@@ -48,17 +54,66 @@ public:
 	ArrayList<VkVertexInputAttributeDescription> m_description;
 	size_t offset {0};
 };
+*/
 
-class Buffer {
+class VulkanBuffer {
 public:
+	VulkanBuffer(VulkanContext *context);
+	~VulkanBuffer();
+
+public:
+	void create(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+	void destroy();
+
+	inline VkBuffer get_buffer() const { return m_buffer; }
+	inline VmaAllocation get_allocation() const { return m_allocation; }
+	inline VmaAllocationInfo get_allocation_info() const { return m_info; }
+
+public:
+	/*
 	static void create_buffer(VmaAllocator allocator, 
 			VkDeviceSize size, VkBufferUsageFlags usage,
 			VkMemoryPropertyFlags properties,
 			VkBuffer &buffer, VmaAllocation &allocation, 
 			VmaAllocationCreateFlags extraflags=VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+	*/
 
 	static void copy_buffer(VulkanContext *context, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+private:
+	VulkanContext *m_context;
+
+	VkBuffer m_buffer;
+    VmaAllocation m_allocation;
+    VmaAllocationInfo m_info;
 };
+
+class VulkanMeshBuffer {
+public:
+	VulkanMeshBuffer(VulkanContext *context);
+	~VulkanMeshBuffer();
+
+	void create(const ArrayList<Vertex> &verticies, const ArrayList<u32> &indicies);
+	void destroy();
+
+	inline VkDeviceAddress get_vertex_address() const { return m_vertexBufferAddress; };
+	inline VulkanBuffer &get_vertex_buffer() { return m_vertex; }
+	inline VulkanBuffer &get_index_buffer() { return m_index; }
+	inline u32 get_index_count() const { return m_indexCount; }
+
+	void bind(VkCommandBuffer cmd);
+	void draw(VkCommandBuffer cmd);
+
+private:
+	VulkanContext *m_context;
+
+	u32 m_indexCount;
+	VulkanBuffer m_vertex;
+	VulkanBuffer m_index;
+	VkDeviceAddress m_vertexBufferAddress;
+};
+
+/*
 
 class VulkanVertexBuffer {
 public:
@@ -115,5 +170,6 @@ private:
 	VmaAllocation m_allocation;
 	VmaAllocationInfo m_info;
 };
+*/
 
 }

@@ -45,6 +45,7 @@ public:
 	void load_metadata(ShortString name);
 	void load_metadata_group(UUID group);
 
+	// ! TODO this for the rest of these functions
 	void load_resource(ShortString name);
 	void load_resource_group(UUID group);
 
