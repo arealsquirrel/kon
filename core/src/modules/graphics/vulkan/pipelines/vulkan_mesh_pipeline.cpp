@@ -53,7 +53,7 @@ void VulkanMeshPipeline::create(Allocator *allocator) {
 
 	VulkanGeometryPipelineBuilder builder(allocator, m_context);
 	builder.input_assemply(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-	builder.rasterize(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+	builder.rasterize(VK_POLYGON_MODE_LINE, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
 	builder.blending();
 	builder.multisample();
 	builder.color_format(m_context->get_renderimage_format());
