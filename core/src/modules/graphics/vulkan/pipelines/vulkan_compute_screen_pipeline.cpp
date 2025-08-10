@@ -3,6 +3,8 @@
 #include <cmath>
 
 #include "modules/graphics/vulkan/vulkan_context.hpp"
+#include "modules/graphics/vulkan/vulkan_descriptors.hpp"
+#include "modules/graphics/vulkan/vulkan_shader.hpp"
 #include <vulkan/vulkan_core.h>
 
 namespace kon {
@@ -19,8 +21,9 @@ void VulkanComputePipelineScreen::create(Allocator *allocator, VulkanShader *com
 		m_descriptorLayout = builder.build(m_context->get_device(), VK_SHADER_STAGE_COMPUTE_BIT);
 	}
 
-	m_descriptors = m_context->get_descriptor_allocator().allocate(m_context->get_device(), m_descriptorLayout);	
+	m_descriptors = m_context->get_descriptor_allocator().allocate(m_descriptorLayout, nullptr);	
 
+	/*
 	VkDescriptorImageInfo imgInfo{};
 	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	imgInfo.imageView = m_context->get_render_image_view();
@@ -36,6 +39,11 @@ void VulkanComputePipelineScreen::create(Allocator *allocator, VulkanShader *com
 	drawImageWrite.pImageInfo = &imgInfo;
 
 	vkUpdateDescriptorSets(m_context->get_device(), 1, &drawImageWrite, 0, nullptr);
+	*/
+	DescriptorWriter dw(allocator, m_context);
+	dw.write_image(0, m_context->get_render_image_view(), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+
+	dw.update_set(m_descriptors);
 
 	VkPushConstantRange pushConstant{};
 	pushConstant.offset = 0;
@@ -78,7 +86,7 @@ void VulkanComputePipelineScreen::bind_pipeline(VkCommandBuffer cmd) {
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline);
 }
 
-void VulkanComputePipelineScreen::bind_descriptor_sets(VkCommandBuffer cmd) {
+void VulkanComputePipelineScreen::bind_descriptor_sets(VkCommandBuffer cmd, VulkanBuffer*) {
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_layout, 0, 1, &m_descriptors, 0, nullptr);
 }
 

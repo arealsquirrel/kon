@@ -7,6 +7,8 @@
 
 namespace kon {
 
+class VulkanContext;
+
 struct DescriptorLayoutBuilder {
     ArrayList<VkDescriptorSetLayoutBinding> bindings;
 
@@ -17,19 +19,58 @@ public:
     VkDescriptorSetLayout build(VkDevice device, VkShaderStageFlags shaderStages, void* pNext = nullptr, VkDescriptorSetLayoutCreateFlags flags = 0);
 };
 
-struct DescriptorAllocator {
+class DescriptorAllocator {
+public:
     struct PoolSizeRatio{
 		VkDescriptorType type;
 		float ratio;
     };
 
-    VkDescriptorPool pool;
+public:
+	DescriptorAllocator(Allocator *allocator, VulkanContext *context);
+	~DescriptorAllocator();
 
-    void init_pool(Allocator *allocator, VkDevice device, uint32_t maxSets, std::initializer_list<PoolSizeRatio> poolRatios);
-    void clear_descriptors(VkDevice device);
-    void destroy_pool(VkDevice device);
+    void init(uint32_t maxSets, const ArrayList<PoolSizeRatio> &poolRatios);
+	void clear_pools();
+	void destroy_pools();
 
-    VkDescriptorSet allocate(VkDevice device, VkDescriptorSetLayout layout);
+    VkDescriptorSet allocate(VkDescriptorSetLayout layout, void *pNext);
+
+private:
+	VkDescriptorPool get_pool();
+	VkDescriptorPool create_pool(uint32_t setCount, const ArrayList<PoolSizeRatio> &poolRatios);
+
+private:
+	Allocator *m_allocator;
+	VulkanContext *m_context;
+
+
+    VkDescriptorPool m_pool;
+	ArrayList<PoolSizeRatio> m_ratios;
+	ArrayList<VkDescriptorPool> m_fullPools;
+	ArrayList<VkDescriptorPool> m_readyPools;
+	uint32_t m_setsPerPool;
+};
+
+class DescriptorWriter {
+public:
+	DescriptorWriter(Allocator *allocator, VulkanContext *context);
+	~DescriptorWriter();
+
+public:
+    void write_image(int binding,VkImageView image,VkSampler sampler , VkImageLayout layout, VkDescriptorType type);
+    void write_buffer(int binding,VkBuffer buffer,size_t size, size_t offset,VkDescriptorType type); 
+
+    void clear();
+    void update_set(VkDescriptorSet set);
+
+public:
+	Allocator *m_allocator;
+	VulkanContext *m_context;
+
+	ArrayList<VkDescriptorImageInfo> m_imageInfos;
+	ArrayList<VkDescriptorBufferInfo> m_bufferInfos;
+	ArrayList<VkWriteDescriptorSet> m_writes;
 };
 
 }

@@ -2,10 +2,13 @@
 #include "vulkan_mesh_pipeline.hpp"
 #include "kon/debug/log.hpp"
 #include "kon/resource/resource_shader.hpp"
+#include "modules/graphics/vulkan/vulkan_buffer.hpp"
+#include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_pipeline.hpp"
 #include <vulkan/vulkan_core.h>
 #include <kon/engine/engine.hpp>
 #include <modules/graphics/vulkan/vulkan_context.hpp>
+#include <modules/graphics/vulkan/vulkan_shader.hpp>
 
 namespace kon {
 
@@ -17,11 +20,19 @@ VulkanMeshPipeline::~VulkanMeshPipeline() {
 }
 
 void VulkanMeshPipeline::create(Allocator *allocator) {
+
+	{
+		DescriptorLayoutBuilder builder{{allocator}};
+		builder.add_binding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+		m_descriptorLayout = builder.build(m_context->get_device(),
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
+
+
 	VkPushConstantRange pushConstant{};
 	pushConstant.offset = 0;
 	pushConstant.size = 128;
 	pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
 
 	VkPipelineLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -65,6 +76,7 @@ void VulkanMeshPipeline::create(Allocator *allocator) {
 }
 
 void VulkanMeshPipeline::destroy() {
+	vkDestroyDescriptorSetLayout(m_context->get_device(), m_descriptorLayout, nullptr);
 	vkDestroyPipelineLayout(m_context->get_device(), m_layout, nullptr);
 	vkDestroyPipeline(m_context->get_device(), m_pipeline, nullptr);
 }
@@ -93,16 +105,31 @@ void VulkanMeshPipeline::bind_pipeline(VkCommandBuffer cmd) {
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 }
 
-void VulkanMeshPipeline::bind_descriptor_sets(VkCommandBuffer cmd) {
+void VulkanMeshPipeline::bind_descriptor_sets(VkCommandBuffer, VulkanBuffer *buffer) {
+	// gpuSceneDataBuffer(m_context);
+	// gpuSceneDataBuffer.create(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
+	//m_context->get_framedata().deletionQueue.push_function([&]() {
+	//	gpuSceneDataBuffer.destroy();
+	// });
+
+	//write the buffer
+	SceneData* sceneUniformData = (SceneData*)buffer->get_allocation_info().pMappedData;
+	*sceneUniformData = m_sceneData;
+
+	//create a descriptor set that binds that buffer and update it
+	VkDescriptorSet globalDescriptor = m_context->get_frame_descriptor().allocate(m_descriptorLayout, nullptr);
+
+	DescriptorWriter writer(m_engine->get_allocator_dynamic(), m_context);
+	writer.write_buffer(0, buffer->get_buffer(), sizeof(SceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+	writer.update_set(globalDescriptor);
 }
 
 void VulkanMeshPipeline::bind_push_constants(VkCommandBuffer cmd, char *data) {
 	vkCmdPushConstants(cmd, m_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), data);
 }
 
-void VulkanMeshPipeline::draw(VkCommandBuffer cmd) {
-	// vkCmdDraw(cmd, 3, 1, 0, 0);
+void VulkanMeshPipeline::draw(VkCommandBuffer) {
 }
 
 }

@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <kon/core/util.hpp>
 #include <kon/core/core.hpp>
+#include <utility>
 
 namespace kon {
 

@@ -14,6 +14,7 @@
 #include "modules/graphics/vulkan/vulkan_image.hpp"
 #include "modules/graphics/vulkan/vulkan_pipeline.hpp"
 #include "modules/graphics/vulkan/vulkan_swapchain.hpp"
+#include <deque>
 #include <kon/debug/log.hpp>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
@@ -27,7 +28,25 @@ class VulkanMeshBuffer;
 
 #define KN_VULKAN_ERR_CHECK(opp) if(opp != VK_SUCCESS) { KN_ERROR("VULKAN ERROR YOUR COOKED"); }
 
+struct DeletionQueue {
+	std::deque<std::function<void()>> deletors;
+
+	void push_function(std::function<void()>&& function) {
+		deletors.push_back(function);
+	}
+
+	void flush() {
+		// reverse iterate the deletion queue to execute all the functions
+		for (auto it = deletors.rbegin(); it != deletors.rend(); it++) {
+			(*it)(); //call functors
+		}
+
+		deletors.clear();
+	}
+};
+
 struct VulkanFrameData {
+	DeletionQueue deletionQueue;
 	VkSemaphore acquireSemaphore;
 	VkFence presentFence;
 	u32 swapchainIndex;
@@ -74,6 +93,7 @@ public:
 	inline VkSurfaceKHR get_surface() const { return m_surface; }
 	inline VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
 	inline VulkanFrameData &get_framedata() { return m_frames[m_frameNumber]; }
+	inline DescriptorAllocator &get_frame_descriptor() { return m_frameDescriptors.get(m_frameNumber); }
 	inline VmaAllocator get_vma_allocator() const { return m_vmaAllocator; }
 	inline DescriptorAllocator &get_descriptor_allocator() { return m_globalDescriptorAllocator; }
 	inline VkImageView get_render_image_view() const { return m_renderImageView.get_handle(); }
@@ -82,6 +102,8 @@ public:
 	inline VkFormat get_renderimage_format() const { return m_renderImage.get_format(); }
 	inline VkQueue get_graphics_queue() const { return m_graphicsQueue; }
 	inline VulkanImage get_depth_image() const { return m_depthImage; }
+	inline VkDescriptorPool get_imgui_pool() const { return m_imguiPool; }
+	
 
 public:
 	VkCommandBuffer start_singetime_commands();
@@ -115,6 +137,8 @@ private:
 	VkSampleCountFlagBits m_msaaSamples;
 
 	Array<VulkanFrameData, FRAME_OVERLAP> m_frames;
+	ArrayList<DescriptorAllocator> m_frameDescriptors;
+	VkDescriptorPool m_imguiPool;
 
 	VulkanImage m_renderImage;
 	VulkanImageView m_renderImageView;
@@ -133,6 +157,8 @@ private:
 	u8 m_frameNumber {0};
 
 public:
+	DeletionQueue m_globalDeletionQueue;
+
 	VulkanComputePipelineScreen::PushConstant m_cpsPushConstants;
 
 	Vector3 position;

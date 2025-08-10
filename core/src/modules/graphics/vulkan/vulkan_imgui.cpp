@@ -32,7 +32,7 @@ VulkanImgui::ColorScheme make_gruvbox_colorscheme() {
 	return scheme;
 }
 
-void style(ImGuiIO &io) {
+void style(ImGuiIO &) {
 	VulkanImgui::ColorScheme colors = make_gruvbox_colorscheme();
 
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -123,7 +123,7 @@ void VulkanImgui::init(VulkanContext *context, GLFWwindow *window) {
     init_info.Device = context->get_device();
     init_info.QueueFamily = find_queue_families(context->get_physical_device(), context->get_surface()).graphicsFamily.value();
     init_info.Queue = context->get_graphics_queue();
-    init_info.DescriptorPool = context->get_descriptor_allocator().pool;
+    init_info.DescriptorPool = context->get_imgui_pool();
 	init_info.UseDynamicRendering = true;
     init_info.MinImageCount = 3;
     init_info.ImageCount = 3;

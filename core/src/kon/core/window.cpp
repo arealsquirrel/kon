@@ -36,7 +36,7 @@ Window::Window(Engine *engine, WindowCreateInfo info)
 		Window::s_engine->get_event_bus().emit_event<EventEngineExit>();
 	});
 
-	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow *window, int width, int height){
+	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow *, int width, int height){
 		KN_TRACE("resize {} {}", width, height);
 		Window::s_engine->get_event_bus().emit_event<EventWindowResize>(width, height);
 	});

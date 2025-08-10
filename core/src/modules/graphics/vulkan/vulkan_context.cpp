@@ -7,12 +7,12 @@
 #include "kon/math/transformations.hpp"
 #include "kon/resource/resource_model.hpp"
 #include "kon/resource/resource_shader.hpp"
+#include "modules/graphics/vulkan/vulkan_buffer.hpp"
 #include "modules/graphics/vulkan/vulkan_descriptors.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
 #include "modules/graphics/vulkan/vulkan_imgui.hpp"
 #include "modules/graphics/vulkan/vulkan_shader.hpp"
 #include "modules/graphics/vulkan/vulkan_util.hpp"
-#include <cstring>
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
 #include <kon/debug/log.hpp>
@@ -28,10 +28,13 @@ VulkanContext::VulkanContext(Engine *engine)
 	: Object(engine),
 	m_swapchain(engine->get_allocator_dynamic(), this),
 	m_commandPool(engine->get_allocator_dynamic(), this),
+	m_frames(),
+	m_frameDescriptors(engine->get_allocator_dynamic()),
 	m_renderImage(this),
 	m_renderImageView(this),
 	m_depthImage(this),
 	m_depthImageView(this),
+	m_globalDescriptorAllocator(engine->get_allocator_dynamic(), this),
 	m_computePipelineScreen(this),
 	m_meshPipeline(engine, this) {}
 
@@ -87,8 +90,14 @@ void VulkanContext::clean_vulkan() {
 	m_computePipelineScreen.destroy();
 	m_meshPipeline.destroy();
 
-	m_globalDescriptorAllocator.destroy_pool(m_device);
-	
+	vkDestroyDescriptorPool(m_device, m_imguiPool, nullptr);
+	m_globalDescriptorAllocator.destroy_pools();
+
+	// m_frameDescriptors.for_each([&](DescriptorAllocator &frame){
+	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
+		m_frameDescriptors[i].destroy_pools();
+	}
+
 	m_renderImageView.destroy();
 	m_renderImage.destroy();
 	m_depthImage.destroy();
@@ -356,21 +365,52 @@ void VulkanContext::create_frames() {
 }
 
 void VulkanContext::create_descriptors() {
-	m_globalDescriptorAllocator.init_pool(m_engine->get_allocator_dynamic(),
-			m_device, 1000, {
+	ArrayList<DescriptorAllocator::PoolSizeRatio> sizes(m_engine->get_allocator_frame(), {
 				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 },
 				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 },
+				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1 },
 				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1 },
 				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
 				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1 },
 				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1 },
 				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1 }
 			});
+
+	m_globalDescriptorAllocator.init(1000, sizes);
+	
+	// ------------- IMGUI POOL ------------- //
+	ArrayList<VkDescriptorPoolSize> imguiPoolSizes(m_engine->get_allocator_dynamic());
+	sizes.for_each([&](auto ratio){
+        imguiPoolSizes.add(VkDescriptorPoolSize{
+            .type = ratio.type,
+            .descriptorCount = uint32_t(ratio.ratio * 1000)
+        });
+    });
+
+	VkDescriptorPoolCreateInfo pool_info = {}; 
+	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	pool_info.maxSets = 1000;
+	pool_info.poolSizeCount = (uint32_t)imguiPoolSizes.get_count();
+	pool_info.pPoolSizes = imguiPoolSizes.get_buffer();
+
+	vkCreateDescriptorPool(m_device, &pool_info, nullptr, &m_imguiPool);
+
+	ArrayList<DescriptorAllocator::PoolSizeRatio> frameSizes(m_engine->get_allocator_frame(), {
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3 },
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 },
+	});
+
+	for(u32 i = 0; i < FRAME_OVERLAP; i++) {
+		m_frameDescriptors.add({m_engine->get_allocator_dynamic(), this})
+			.init(1000, frameSizes);
+	}
 }
 
 VkCommandBuffer VulkanContext::start_singetime_commands() {
@@ -414,6 +454,8 @@ void VulkanContext::start_frame() {
 	}
 
 	KN_VULKAN_ERR_CHECK(vkWaitForFences(m_device, 1, &frame.presentFence, true, 1000000000));
+	get_framedata().deletionQueue.flush();
+	m_frameDescriptors[m_frameNumber].clear_pools();
 	KN_VULKAN_ERR_CHECK(vkResetFences(m_device, 1, &frame.presentFence));
 
 	VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain.get_swapchain(),
@@ -444,7 +486,7 @@ void VulkanContext::start_frame() {
 	VulkanImage::transition_image(cmd, m_renderImage.get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
 	m_computePipelineScreen.bind_pipeline(cmd);
-	m_computePipelineScreen.bind_descriptor_sets(cmd);
+	m_computePipelineScreen.bind_descriptor_sets(cmd, nullptr);
 	m_computePipelineScreen.bind_push_constants(cmd, KN_MEM_POINTER(&m_cpsPushConstants));
 	m_computePipelineScreen.draw(cmd);
 
@@ -479,9 +521,15 @@ void VulkanContext::start_frame() {
 	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_translation(position));
 	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_perspective(cameraScale, 1.0f, 0.01f, 100.0f));
 
+	VulkanBuffer gpuSceneDataBuffer(this);
+	gpuSceneDataBuffer.create(sizeof(VulkanMeshPipeline::SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	// = create_buffer(sizeof(GPUSceneData), VK_UFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	m_meshPipeline.bind_descriptor_sets(cmd, &gpuSceneDataBuffer);
 	m_meshPipeline.bind_push_constants(cmd, KN_MEM_POINTER(&meshPushConstants));
 	m_mesh->bind(cmd);
 	m_mesh->draw(cmd);
+
+	gpuSceneDataBuffer.destroy();
 
 	vkCmdEndRendering(cmd);
 }

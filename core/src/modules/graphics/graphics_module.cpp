@@ -12,7 +12,7 @@ namespace kon {
 GraphicsModule::GraphicsModule(Engine *engine, Allocator *allocator)
 	: Module(engine, allocator), EventListener(this), m_context(engine) {
 
-	subscribe_event<EventWindowResize>([&](EventWindowResize &event){
+	subscribe_event<EventWindowResize>([&](EventWindowResize&){
 		m_context.recreate_swapchain();
 	});
 }

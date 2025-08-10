@@ -39,10 +39,7 @@ void ResourceModel::load_resource(ResourceLoadError &error) {
 	std::unordered_map<Vertex, u32> uniqueVertices{};
 
 	for (const auto& shape : shapes) {
-		for (const auto& index : shape.mesh.indices) {
-			KN_TRACE("Vert");
-
-			
+		for (const auto& index : shape.mesh.indices) {			
 			Vertex vertex{};
 
 			vertex.position = {
@@ -73,27 +70,7 @@ void ResourceModel::load_resource(ResourceLoadError &error) {
 		}
 	}
 	
-
-	KN_TRACE("loading model");
-
-	/*
-	m_verticies.add({{0.5,-0.5, 0}, 1,  {0,0,0}, 1, {0,0,0}});
-	m_verticies.add({{0.5, 0.5, 0}, 1,  {0,0,0}, 1, {0,0,0}});
-	m_verticies.add({{-0.5,-0.5, 0}, 1, {0,0,0}, 1, {0,0,0}});
-	m_verticies.add({{-0.5,0.5, 0}, 1,  {0,0,0}, 1, {0,0,0}});
-
-	m_indices.add(0);
-	m_indices.add(1);
-	m_indices.add(2);
-	m_indices.add(3);
-	m_indices.add(1);
-	m_indices.add(2);
-	*/
-
-
 	m_mesh.create(m_verticies, m_indices);
-
-	KN_TRACE("loading model");
 
 	Resource::load_resource(error);
 }

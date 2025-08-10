@@ -8,6 +8,7 @@
 namespace kon {
 
 class VulkanContext;
+class VulkanShader;
 
 /*
  * this is the compute pipeline in charge of rendering the
@@ -31,7 +32,7 @@ public:
 
 public:
 	void bind_pipeline(VkCommandBuffer cmd) override;
-	void bind_descriptor_sets(VkCommandBuffer cmd) override;
+	void bind_descriptor_sets(VkCommandBuffer cmd, VulkanBuffer *buffer) override;
 	void bind_push_constants(VkCommandBuffer cmd, char *data) override;
 	void draw(VkCommandBuffer cmd) override;
 

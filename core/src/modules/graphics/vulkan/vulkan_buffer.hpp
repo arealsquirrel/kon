@@ -4,7 +4,6 @@
 #include "kon/container/arraylist.hpp"
 #include "kon/core/allocator.hpp"
 // #include "modules/graphics/graphics_module.hpp"
-#include "modules/graphics/vulkan/vulkan_context.hpp"
 #include "modules/graphics/vulkan/vulkan_image.hpp"
 #include <cstddef>
 #include <initializer_list>
@@ -22,6 +21,7 @@
 namespace kon {
 
 struct Vertex;
+class VulkanContext;
 
 /*
 
