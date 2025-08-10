@@ -34,7 +34,7 @@ public:
 	void clear_pools();
 	void destroy_pools();
 
-    VkDescriptorSet allocate(VkDescriptorSetLayout layout, void *pNext);
+    VkDescriptorSet allocate(VkDescriptorSetLayout layout, void *pNext=nullptr);
 
 private:
 	VkDescriptorPool get_pool();

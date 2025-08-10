@@ -8,6 +8,7 @@
 #include "kon/engine/engine.hpp"
 #include "kon/math/vector.hpp"
 #include "kon/resource/resource.hpp"
+#include "modules/graphics/vulkan/vulkan_image.hpp"
 #include <kon/math/vector2.hpp>
 
 namespace kon {
@@ -70,11 +71,14 @@ public:
 	u8 *get_image() const { return m_image; }
 	ColorChannels get_channels() const { return m_channels; }
 	const Meta &get_metadata() const { return m_metadata; }
+	inline VulkanTexture &get_texture() { return m_graphicsImage; }
 
 private:
 	u8 *m_image;
 	ColorChannels m_channels;
 	Meta m_metadata;
+
+	VulkanTexture m_graphicsImage;
 };
 
 }

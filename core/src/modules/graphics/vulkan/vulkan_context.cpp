@@ -1,4 +1,4 @@
-
+#include <kon/resource/resource_image.hpp>
 #include "vulkan_context.hpp"
 #include "kon/core/core.hpp"
 #include "kon/core/object.hpp"
@@ -71,8 +71,11 @@ void VulkanContext::init_vulkan() {
 	kon::VulkanImgui::init(this, m_engine->get_window().get_handle());
 
 	cache.load_resource("Monkey.obj");
-	ResourceModel *model = cache.get_resource<ResourceModel>("Monkey.obj"); //->cast<ResourceModel>();
+	ResourceModel *model = cache.get_resource<ResourceModel>("Monkey.obj");
 	m_mesh = model->get_mesh();
+
+	cache.load_resource("Prototype_Grid_Green_09-256x256.png");
+	m_textureImage = cache.get_resource<ResourceImage>("Prototype_Grid_Green_09-256x256.png");
 
 	KN_TRACE("done setting up vulkan");
 }
@@ -498,7 +501,7 @@ void VulkanContext::start_frame() {
 	VkRenderingAttachmentInfo depthAttachment = vkutil::depth_attachment_info(m_depthImageView.get_handle(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 	VkRenderingAttachmentInfo colorAttachment = vkutil::attachment_info(m_renderImageView.get_handle(), nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	VkRect2D renderArea = {};
-	renderArea.extent = {m_swapchain.get_extent()};
+	renderArea.extent = {m_renderImage.get_extent().width, m_renderImage.get_extent().height};
 	renderArea.offset = {0,0};
 
 	VkRenderingInfo renderInfo = {};
@@ -521,9 +524,22 @@ void VulkanContext::start_frame() {
 	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_translation(position));
 	meshPushConstants.worldMatrix = matrix_multiply(meshPushConstants.worldMatrix, trfm_perspective(cameraScale, 1.0f, 0.01f, 100.0f));
 
+	VkDescriptorSet imageSet = m_frameDescriptors.get(m_frameNumber).allocate(m_meshPipeline.get_image_layout());
+
+	{
+		DescriptorWriter writer(m_engine->get_allocator_dynamic(), this);
+		writer.write_image(0, m_textureImage->get_texture().get_view().get_handle(),
+				m_textureImage->get_texture().get_sampler(),
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+		writer.update_set(imageSet);
+	}
+
+	// vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_meshPipeline.get_layout(), 0, 1, &imageSet, 0, nullptr);
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_meshPipeline.get_pipeline_layout(), 0, 1, &imageSet, 0, nullptr);
+
 	VulkanBuffer gpuSceneDataBuffer(this);
 	gpuSceneDataBuffer.create(sizeof(VulkanMeshPipeline::SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	// = create_buffer(sizeof(GPUSceneData), VK_UFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	m_meshPipeline.bind_descriptor_sets(cmd, &gpuSceneDataBuffer);
 	m_meshPipeline.bind_push_constants(cmd, KN_MEM_POINTER(&meshPushConstants));
 	m_mesh->bind(cmd);

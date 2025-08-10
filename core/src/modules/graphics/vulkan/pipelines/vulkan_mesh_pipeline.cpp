@@ -28,6 +28,12 @@ void VulkanMeshPipeline::create(Allocator *allocator) {
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 
+	{
+		DescriptorLayoutBuilder builder{{allocator}};
+		builder.add_binding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+		m_descriptorImage = builder.build(m_context->get_device(), VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
+
 
 	VkPushConstantRange pushConstant{};
 	pushConstant.offset = 0;
@@ -37,8 +43,8 @@ void VulkanMeshPipeline::create(Allocator *allocator) {
 	VkPipelineLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	layoutInfo.pNext = nullptr;
-	// layoutInfo.pSetLayouts = &m_descriptorLayout;
-	layoutInfo.setLayoutCount = 0;
+	layoutInfo.pSetLayouts = &m_descriptorImage;
+	layoutInfo.setLayoutCount = 1;
 	layoutInfo.pPushConstantRanges = &pushConstant;
 	layoutInfo.pushConstantRangeCount = 1;
 	
@@ -105,7 +111,7 @@ void VulkanMeshPipeline::bind_pipeline(VkCommandBuffer cmd) {
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 }
 
-void VulkanMeshPipeline::bind_descriptor_sets(VkCommandBuffer, VulkanBuffer *buffer) {
+void VulkanMeshPipeline::bind_descriptor_sets(VkCommandBuffer cmd, VulkanBuffer *buffer) {
 	// gpuSceneDataBuffer(m_context);
 	// gpuSceneDataBuffer.create(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 

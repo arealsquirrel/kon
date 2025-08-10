@@ -1,15 +1,19 @@
 
 #include "resource_image.hpp"
 #include "kon/core/directory.hpp"
+#include "kon/debug/log.hpp"
 #include "kon/resource/resource.hpp"
+#include "modules/graphics/graphics_module.hpp"
 
 #include <../vendor/stb_image.h>
+#include <vulkan/vulkan_core.h>
 
 namespace kon {
 
 ResourceImage::ResourceImage(Allocator *allocator, Engine *engine,
 			 Directory path, ShortString name, UUID groupID)
-	: Resource(allocator, engine, path, name, groupID), m_metadata({"", ColorFormat_R8, {0,0}, {allocator}}) {}
+	: Resource(allocator, engine, path, name, groupID), m_metadata({"", ColorFormat_R8, {0,0}, {allocator}}),
+	  m_graphicsImage(engine->get_modules().get<GraphicsModule>()->get_graphics_context()) {}
 
 ResourceImage::~ResourceImage() = default;
 
@@ -19,9 +23,16 @@ void ResourceImage::load_resource(ResourceLoadError &error) {
 	int x;
 	int y;
 
-	m_image = stbi_load(m_metadata.image.c_str(),
+	m_image = stbi_load(m_path.c_str(),
 			  	&x, &y,
-			 	(int*)(&m_channels), 0);
+			 	(int*)(&m_channels), 4);
+
+	if(m_image == nullptr) {
+		KN_CORE_ERROR("uuhh your image is cooked {}", m_path.c_str());
+	}
+
+	m_graphicsImage.create(m_image, VkExtent3D{(u32)x,(u32)y,1},
+			VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL);
 
 	Resource::load_resource(error);
 }

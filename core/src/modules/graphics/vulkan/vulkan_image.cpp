@@ -1,5 +1,6 @@
 
 #include "vulkan_image.hpp"
+#include "kon/debug/log.hpp"
 #include "modules/graphics/vulkan/vulkan_context.hpp"
 #include <vulkan/vulkan_core.h>
 #include <modules/graphics/vulkan/vulkan_config.hpp>
@@ -23,7 +24,7 @@ void VulkanImage::create(VkExtent3D extent, VkFormat format,
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageInfo.extent = extent;
-	imageInfo.mipLevels = mipLevels;
+	imageInfo.mipLevels = 1;
 	imageInfo.arrayLayers = 1;
 	imageInfo.format = format;
 	imageInfo.tiling = tiling;
@@ -38,6 +39,44 @@ void VulkanImage::create(VkExtent3D extent, VkFormat format,
 
 	//allocate and create the image
 	vmaCreateImage(m_context->get_vma_allocator(), &imageInfo, &rimg_allocinfo, &m_image, &m_allocation, nullptr);
+}
+
+void VulkanImage::create(void* data, VkExtent3D size, VkFormat format, VkImageTiling tiling,
+			VkImageUsageFlags usage, bool mipmapped,
+			VkSampleCountFlagBits numSamples) {
+
+	size_t data_size = size.depth * size.width * size.height * 4;
+	VulkanBuffer uploadbuffer(m_context); // = create_buffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uploadbuffer.create(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	memcpy(uploadbuffer.get_allocation_info().pMappedData, data, data_size);
+	
+	create(size, format, tiling, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, mipmapped, numSamples);
+
+	// immediate_submit([&](VkCommandBuffer cmd) {
+	VkCommandBuffer cmd = m_context->start_singetime_commands();
+		transition_image(cmd, m_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		VkBufferImageCopy copyRegion = {};
+		copyRegion.bufferOffset = 0;
+		copyRegion.bufferRowLength = 0;
+		copyRegion.bufferImageHeight = 0;
+
+		copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copyRegion.imageSubresource.mipLevel = 0;
+		copyRegion.imageSubresource.baseArrayLayer = 0;
+		copyRegion.imageSubresource.layerCount = 1;
+		copyRegion.imageExtent = size;
+
+		// copy the buffer into the image
+		vkCmdCopyBufferToImage(cmd, uploadbuffer.get_buffer(), m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+			&copyRegion);
+
+		transition_image(cmd, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	
+	m_context->end_singletime_commands(cmd);
+	
+	uploadbuffer.destroy();
 }
 
 void VulkanImage::destroy() {
@@ -144,6 +183,33 @@ VkImageSubresourceRange VulkanImage::image_subresource_range(VkImageAspectFlags 
     subImage.baseArrayLayer = 0;
     subImage.layerCount = VK_REMAINING_ARRAY_LAYERS;
     return subImage;
+}
+
+VulkanTexture::VulkanTexture(VulkanContext *context)
+	: m_context(context), m_view(context), m_image(context) {}
+
+VulkanTexture::~VulkanTexture() = default;
+
+void VulkanTexture::create(void *data, VkExtent3D extent, VkFormat format, VkImageTiling tiling,
+				  bool mipped, VkSampleCountFlagBits numSamples) {
+
+	m_image.create(data, extent, format, tiling, VK_IMAGE_USAGE_SAMPLED_BIT, mipped, VK_SAMPLE_COUNT_1_BIT);
+
+	m_view.create(m_image.get_handle(), format, VK_IMAGE_ASPECT_COLOR_BIT);
+
+	VkSamplerCreateInfo sampl = {}; 
+	sampl.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampl.magFilter = VK_FILTER_NEAREST;
+	sampl.minFilter = VK_FILTER_NEAREST;
+
+	KN_VULKAN_ERR_CHECK(vkCreateSampler(m_context->get_device(), &sampl, nullptr, &m_imageSampler));
+}
+
+void VulkanTexture::destroy() {
+	vkDestroySampler(m_context->get_device(),
+			m_imageSampler, nullptr);
+	m_view.destroy();
+	m_image.destroy();
 }
 
 }

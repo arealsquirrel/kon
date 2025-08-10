@@ -19,6 +19,11 @@ public:
 public:
 	void create(VkExtent3D extent, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 				uint32_t mipLevels=1, VkSampleCountFlagBits numSamples=VK_SAMPLE_COUNT_1_BIT);
+	
+	void create(void* data, VkExtent3D size, VkFormat format, VkImageTiling tiling,
+			VkImageUsageFlags usage, bool mipmapped = false,
+			VkSampleCountFlagBits numSamples=VK_SAMPLE_COUNT_1_BIT);
+
 	void destroy();
 
 public:
@@ -62,6 +67,28 @@ public:
 private:
 	VkImageView m_view { VK_NULL_HANDLE };
 	VulkanContext *m_context;
+};
+
+class VulkanTexture {
+public:
+	VulkanTexture(VulkanContext *context);
+	~VulkanTexture();
+
+	void create(void *data, VkExtent3D extent, VkFormat format, VkImageTiling tiling,
+				bool miped=false, VkSampleCountFlagBits numSamples=VK_SAMPLE_COUNT_1_BIT);
+
+	void destroy();
+
+	inline VulkanImageView &get_view() { return m_view; }
+	inline VulkanImage &get_image() { return m_image; }
+	inline VkSampler get_sampler() const { return m_imageSampler; }
+
+private:
+	VulkanContext *m_context;
+
+	VulkanImageView m_view;
+	VulkanImage m_image;
+	VkSampler m_imageSampler;
 };
 
 }

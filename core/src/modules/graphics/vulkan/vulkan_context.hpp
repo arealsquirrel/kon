@@ -23,6 +23,7 @@
 namespace kon {
 
 class VulkanMeshBuffer;
+class ResourceImage;
 
 #define KN_ENABLE_VALIDATION true
 
@@ -155,6 +156,8 @@ private:
 	bool m_resizeRequested {false};
 
 	u8 m_frameNumber {0};
+
+	ResourceImage *m_textureImage;
 
 public:
 	DeletionQueue m_globalDeletionQueue;

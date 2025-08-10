@@ -22,7 +22,6 @@ void VulkanBuffer::create(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryU
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.pNext = nullptr;
 	bufferInfo.size = allocSize;
-
 	bufferInfo.usage = usage;
 
 	VmaAllocationCreateInfo vmaallocInfo = {};
@@ -146,6 +145,7 @@ void VulkanMeshBuffer::create(
 }
 
 void VulkanMeshBuffer::destroy() {
+	vkDeviceWaitIdle(m_context->get_device());
 	m_vertex.destroy();
 	m_index.destroy();
 }
